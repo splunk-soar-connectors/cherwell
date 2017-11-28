@@ -1,7 +1,7 @@
 {
     "appid": "0c3691f1-3599-4dd3-9fa1-fddd818d3549",
     "name": "Cherwell",
-    "description": "This app implements various generic actions surrounding ticketing on Cherwell",
+    "description": "This app implements various ticketing actions on Cherwell",
     "type": "ticketing",
     "product_vendor": "Cherwell Software",
     "logo": "cherwell.png",

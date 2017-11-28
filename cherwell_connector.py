@@ -225,7 +225,7 @@ class CherwellConnector(BaseConnector):
             data=search_request, method='post'
         )
         if phantom.is_fail(ret_val):
-            return ret_val
+            return RetVal(ret_val)
 
         try:
             recid = response['businessObjects'][0]['busObRecId']
