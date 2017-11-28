@@ -1,14 +1,14 @@
 {
     "appid": "0c3691f1-3599-4dd3-9fa1-fddd818d3549",
     "name": "Cherwell",
-    "description": "Replace Me",
+    "description": "This app implements various generic actions surrounding ticketing on Cherwell",
     "type": "ticketing",
     "product_vendor": "Cherwell Software",
     "logo": "cherwell.png",
     "product_name": "Cherwell",
     "product_version_regex": ".*",
     "publisher": "Phantom",
-    "license": "Copyright Phantom 2017",
+    "license": "Copyright (c) Phantom 2017",
     "app_version": "1.0.0",
     "utctime_updated": "2017-11-20T22:47:41.399102Z",
     "package_name": "phantom_cherwell",
@@ -43,12 +43,6 @@
             "data_type": "string",
             "required": true,
             "order": 4
-        },
-        "client_secret": {
-            "description": "Client Secret (Used for Native Clients)",
-            "data_type": "password",
-            "required": false,
-            "order": 5
         }
     },
     "actions": [
@@ -3549,7 +3543,7 @@
         {
             "action": "get ticket",
             "identifier": "get_ticket",
-            "description": "Get ticket (issue) information",
+            "description": "Get incident information",
             "verbose": "",
             "type": "generic",
             "read_only": true,
@@ -10842,8 +10836,7 @@
         {
             "action": "list tickets",
             "identifier": "list_tickets",
-            "description": "Get a list of tickets (issues) in a project",
-            "verbose": "",
+            "description": "Get a list of incidents",
             "type": "generic",
             "read_only": true,
             "parameters": {},
