@@ -10860,10 +10860,6 @@
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.summary",
-                    "data_type": "string"
-                },
-                {
                     "data_path": "summary.total_objects",
                     "data_type": "numeric",
                     "example_values": [
@@ -10878,102 +10874,48 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.errorCode",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.hasError",
-                    "data_type": "boolean",
-                    "example_values": [
-                        true,
-                        false
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.errorMessage",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.hasError",
-                    "data_type": "boolean",
-                    "example_values": [
-                        true,
-                        false
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.subTitle",
+                    "data_path": "action_result.data.*.busObRecId",
                     "data_type": "string",
                     "example_values": [
-                        "Open Incidents only."
+                        "9430df3c11b4e320235525476ab4d45a83e694ee3f"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.title",
+                    "data_path": "action_result.data.*.publicId",
                     "data_type": "string",
                     "example_values": [
-                        "Incidents"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.errorMessage",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.targetId",
-                    "data_type": "string",
-                    "example_values": [
-                        "6dd53665c0c24cab86870a21cf6434ae"
-                    ],
-                    "contains": [
-                        "md5"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.errorCode",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.busObRecId",
-                    "data_type": "string",
-                    "example_values": [
-                        "940d397afb64f874644d1a4126a5af80b9bd1e585c"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.publicId",
-                    "data_type": "string",
-                    "example_values": [
-                        "102303"
+                        "102332"
                     ],
                     "contains": [
                         "cherwell public id"
                     ],
                     "column_name": "ID",
-                    "column_order": 1
+                    "column_order": 2
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.title",
+                    "data_path": "action_result.data.*.title",
                     "data_type": "string",
                     "example_values": [
-                        "102303, New, Anthony Edwards"
+                        "102332, In Progress, Andrew Simms"
                     ],
                     "column_name": "Title",
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.text",
+                    "data_path": "action_result.data.*.text",
                     "data_type": "string",
                     "example_values": [
-                        "Category: Add/Change\r\nSubcategory: New Employee Setup\r\nNew Employee Setup \u00a0- -(Submitted by Matt Brown via Portal) Rusty Ray"
-                    ]
+                        "Update From Playbook Ticket 102332"
+                    ],
+                    "column_name": "Description",
+                    "column_order": 1
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.scopeOwner",
+                    "data_path": "action_result.data.*.scopeOwner",
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.busObId",
+                    "data_path": "action_result.data.*.busObId",
                     "data_type": "string",
                     "example_values": [
                         "6dd53665c0c24cab86870a21cf6434ae"
@@ -10983,40 +10925,25 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.scope",
+                    "data_path": "action_result.data.*.scope",
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.subTitle",
+                    "data_path": "action_result.data.*.subTitle",
                     "data_type": "string",
                     "example_values": [
-                        "Last Modified 2/11/2016 @ 11:08 PM by Cherwell Admin"
+                        "Last Modified 11:46 PM by Andrew Simms"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.docRepositoryItemId",
+                    "data_path": "action_result.data.*.docRepositoryItemId",
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.groups.*.simpleResultsListItems.*.galleryImage",
+                    "data_path": "action_result.data.*.galleryImage",
                     "data_type": "string",
                     "example_values": [
                         ""
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.groups.*.isBusObTarget",
-                    "data_type": "boolean",
-                    "example_values": [
-                        true,
-                        false
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.title",
-                    "data_type": "string",
-                    "example_values": [
-                        "Search for: "
                     ]
                 }
             ],

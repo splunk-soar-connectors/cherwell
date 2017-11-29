@@ -555,7 +555,10 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
-        action_result.add_data(response)
+        for group in response['groups']:
+            for item in group['simpleResultsListItems']:
+                action_result.add_data(item)
+
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Listed Tickets")
 
     def handle_action(self, param):
@@ -659,7 +662,7 @@ if __name__ == '__main__':
             print ("Unable to get session id from the platfrom. Error: " + str(e))
             exit(1)
 
-    with open(argps.input_test_json) as f:
+    with open(args.input_test_json) as f:
         in_json = f.read()
         in_json = json.loads(in_json)
         print(json.dumps(in_json, indent=4))
