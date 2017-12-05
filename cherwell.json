@@ -3190,7 +3190,9 @@
                     "data_type": "string",
                     "example_values": [
                         "Successfully Retrieved Attachments"
-                    ]
+                    ],
+                    "column_name": "Message",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.summary",
@@ -3315,7 +3317,9 @@
                     "data_type": "string",
                     "example_values": [
                         "Successfully updated incident"
-                    ]
+                    ],
+                    "column_name": "Message",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.parameter.file",
@@ -3462,8 +3466,6 @@
                 {
                     "data_path": "action_result.status",
                     "data_type": "string",
-                    "column_name": "status",
-                    "column_order": 0,
                     "example_values": [
                         "success"
                     ]
@@ -3473,11 +3475,9 @@
                     "data_type": "string",
                     "contains": [
                         "cherwell public id"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data",
-                    "data_type": "string"
+                    ],
+                    "column_name": "New Ticket ID",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.message",
