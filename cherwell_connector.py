@@ -288,7 +288,17 @@ class CherwellConnector(BaseConnector):
             with open(file_path, 'wb+') as fp:
                 fp.write(response)
                 fp.close()
-                Vault.add_attachment(file_path, self.get_container_id())
+                resp = Vault.add_attachment(file_path, self.get_container_id())
+
+            if not resp['succeeded']:
+                return action_result.set_status(
+                    phantom.APP_ERROR,
+                    "Unable to add file to vault: {}".format(str(resp['message']))
+                )
+
+            attachment.update({
+                'vault_id': resp['vault_id']
+            })
         return phantom.APP_SUCCESS
 
     def _handle_test_connectivity(self, param):
@@ -364,7 +374,8 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
-        action_result.add_data(response)
+        for result in response['attachments']:
+            action_result.add_data(result)
 
         if save_attachmets:
             ret_val = self._download_save_attachments(action_result, response['attachments'])
