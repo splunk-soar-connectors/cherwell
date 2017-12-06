@@ -3190,7 +3190,9 @@
                     "data_type": "string",
                     "example_values": [
                         "Successfully Retrieved Attachments"
-                    ]
+                    ],
+                    "column_name": "Message",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.summary",
@@ -3238,6 +3240,7 @@
             "action": "update ticket",
             "identifier": "update_ticket",
             "description": "Update an incident",
+            "verbose": "The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in the incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{\"Category\": \"Security Incident\"}</code>",
             "type": "generic",
             "read_only": false,
             "parameters": {
@@ -3315,7 +3318,9 @@
                     "data_type": "string",
                     "example_values": [
                         "Successfully updated incident"
-                    ]
+                    ],
+                    "column_name": "Message",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.parameter.file",
@@ -3375,7 +3380,7 @@
             "action": "create ticket",
             "identifier": "create_ticket",
             "description": "Create an incident",
-            "verbose": "Either a Public ID or a Record ID for a user must be used. When possible, try to use the Record ID over the Public ID. If both are present, the Public ID will be ignored",
+            "verbose": "Either a Public ID or a Record ID for a user must be used. When possible, try to use the Record ID over the Public ID. If both are present, the Public ID will be ignored.<br> The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in an incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{\"Category\": \"Security Incident\"}</code>",
             "type": "generic",
             "read_only": false,
             "parameters": {
@@ -3462,8 +3467,6 @@
                 {
                     "data_path": "action_result.status",
                     "data_type": "string",
-                    "column_name": "status",
-                    "column_order": 0,
                     "example_values": [
                         "success"
                     ]
@@ -3473,11 +3476,9 @@
                     "data_type": "string",
                     "contains": [
                         "cherwell public id"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data",
-                    "data_type": "string"
+                    ],
+                    "column_name": "New Ticket ID",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.message",
