@@ -3070,52 +3070,6 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.summary",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.message",
-                    "data_type": "string",
-                    "example_values": [
-                        "Successfully Retrieved Attachments"
-                    ]
-                },
-                {
-                    "data_path": "summary.total_objects",
-                    "data_type": "numeric",
-                    "example_values": [
-                        1
-                    ]
-                },
-                {
-                    "data_path": "summary.total_objects_successful",
-                    "data_type": "numeric",
-                    "example_values": [
-                        1
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.comment",
-                    "data_type": "string",
-                    "example_values": [
-                        ""
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.busObRecId",
-                    "data_type": "string",
-                    "example_values": [
-                        "94308336ffce2054555f9a4312b463b2d93833328a"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.attachmentFileId",
-                    "data_type": "string",
-                    "example_values": [
-                        "943083f71082bbcafc5b8c44aa9f92e5f8779e70f6"
-                    ]
-                },
-                {
                     "data_path": "action_result.data.*.attachedBusObId",
                     "data_type": "string",
                     "example_values": [
@@ -3123,54 +3077,17 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.created",
-                    "data_type": "string",
-                    "example_values": [
-                        "2017-11-22T01:37:44"
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.attachmentType",
-                    "data_type": "numeric",
-                    "example_values": [
-                        0
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.vault_id",
-                    "data_type": "string",
-                    "example_values": [
-                        "e6400081f30b3c2010605416cde61df3e840197e"
-                    ],
-                    "contains": [
-                        "vault id",
-                        "sha1"
-                    ],
-                    "column_name": "Vault ID",
-                    "column_order": 1
-                },
-                {
-                    "data_path": "action_result.data.*.scopeOwner",
-                    "data_type": "string",
-                    "example_values": [
-                        ""
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.busObId",
-                    "data_type": "string",
-                    "example_values": [
-                        "6dd53665c0c24cab86870a21cf6434ae"
-                    ],
-                    "contains": [
-                        "md5"
-                    ]
-                },
-                {
                     "data_path": "action_result.data.*.attachedBusObRecId",
                     "data_type": "string",
                     "example_values": [
                         ""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.attachmentFileId",
+                    "data_type": "string",
+                    "example_values": [
+                        "943083f71082bbcafc5b8c44aa9f92e5f8779e70f6"
                     ]
                 },
                 {
@@ -3200,17 +3117,41 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.scope",
+                    "data_path": "action_result.data.*.attachmentType",
                     "data_type": "numeric",
                     "example_values": [
                         0
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.owner",
+                    "data_path": "action_result.data.*.busObId",
+                    "data_type": "string",
+                    "example_values": [
+                        "6dd53665c0c24cab86870a21cf6434ae"
+                    ],
+                    "contains": [
+                        "md5"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.busObRecId",
+                    "data_type": "string",
+                    "example_values": [
+                        "94308336ffce2054555f9a4312b463b2d93833328a"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.comment",
                     "data_type": "string",
                     "example_values": [
                         ""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.created",
+                    "data_type": "string",
+                    "example_values": [
+                        "2017-11-22T01:37:44"
                     ]
                 },
                 {
@@ -3221,7 +3162,66 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.owner",
+                    "data_type": "string",
+                    "example_values": [
+                        ""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.scope",
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.scopeOwner",
+                    "data_type": "string",
+                    "example_values": [
+                        ""
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.type",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.vault_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "e6400081f30b3c2010605416cde61df3e840197e"
+                    ],
+                    "contains": [
+                        "vault id",
+                        "sha1"
+                    ],
+                    "column_name": "Vault ID",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Successfully Retrieved Attachments"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
                     "data_type": "numeric",
                     "example_values": [
                         1
