@@ -280,7 +280,13 @@ class CherwellConnector(BaseConnector):
             )
             if phantom.is_fail(ret_val):
                 return ret_val
-            file_path = '/opt/phantom/vault/tmp/{}'.format(attachment['attachmentFileName'])
+
+            if hasattr(Vault, 'get_vault_tmp_dir'):
+                temp_dir = Vault.get_vault_tmp_dir()
+            else:
+                temp_dir = '/opt/phantom/vault/tmp'
+
+            file_path = temp_dir + '/{}'.format(attachment['attachmentFileName'])
             with open(file_path, 'wb+') as fp:
                 fp.write(response)
                 fp.close()
