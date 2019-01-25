@@ -1,14 +1,10 @@
 # --
 # File: cherwell_connector.py
 #
-# Copyright (c) Phantom Cyber Corporation, 2017-2018
+# Copyright (c) 2017-2019 Splunk Inc.
 #
-# This unpublished material is proprietary to Phantom Cyber.
-# All rights reserved. The methods and
-# techniques described herein are considered trade secrets
-# and/or confidential. Reproduction or distribution, in whole
-# or in part, is forbidden except by express written permission
-# of Phantom Cyber.
+# SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
+# without a valid written license from Splunk Inc. is PROHIBITED.
 #
 # --
 
@@ -284,7 +280,13 @@ class CherwellConnector(BaseConnector):
             )
             if phantom.is_fail(ret_val):
                 return ret_val
-            file_path = '/opt/phantom/vault/tmp/{}'.format(attachment['attachmentFileName'])
+
+            if hasattr(Vault, 'get_vault_tmp_dir'):
+                temp_dir = Vault.get_vault_tmp_dir()
+            else:
+                temp_dir = '/opt/phantom/vault/tmp'
+
+            file_path = temp_dir + '/{}'.format(attachment['attachmentFileName'])
             with open(file_path, 'wb+') as fp:
                 fp.write(response)
                 fp.close()
