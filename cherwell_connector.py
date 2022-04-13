@@ -1,6 +1,6 @@
 # File: cherwell_connector.py
 #
-# Copyright (c) 2017-2019 Splunk Inc.
+# Copyright (c) 2017-2022 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
 #
 #
 # Phantom App imports
+import json
+
 import phantom.app as phantom
-from phantom.base_connector import BaseConnector
+import requests
+from bs4 import BeautifulSoup
 from phantom.action_result import ActionResult
+from phantom.base_connector import BaseConnector
 from phantom.vault import Vault
+from requests.structures import CaseInsensitiveDict
 
 # Usage of the consts file is recommended
 from cherwell_consts import *
-import requests
-from requests.structures import CaseInsensitiveDict
-import json
-from bs4 import BeautifulSoup
 
 
 class RetVal(tuple):
@@ -125,6 +126,19 @@ class CherwellConnector(BaseConnector):
 
     def _make_rest_call(self, endpoint, action_result, headers=None, params=None, data=None, form_data=None, method="get"):
         resp_json = None
+
+        if not headers:
+            headers = {}
+        headers.update({
+            'Authorization': 'Bearer {}'.format(self._state.get('access_token'))
+        })
+
+        if not params:
+            params = {}
+        params.update({
+            'api_key': self.get_config()['client_id']
+        })
+
         try:
             request_func = getattr(requests, method)
         except AttributeError:
@@ -142,13 +156,29 @@ class CherwellConnector(BaseConnector):
                 params=params
             )
         except Exception as e:
-            return RetVal(action_result.set_status( phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
+
+        if r.status_code == 401:
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching access token: {}".format(r.text)), r.status_code)
 
         return self._process_response(r, action_result)
 
     def _make_rest_call_file(self, endpoint, action_result, headers=None, params=None, data=None, form_data=None, method="get"):
         # This is used for making a rest call which will return a file (whihc would just be a string of bytes)
         # No need for as much validation of the output here
+
+        if not headers:
+            headers = {}
+        headers.update({
+            'Authorization': 'Bearer {}'.format(self._state.get('access_token'))
+        })
+
+        if not params:
+            params = {}
+        params.update({
+            'api_key': self.get_config()['client_id']
+        })
+
         try:
             request_func = getattr(requests, method)
         except AttributeError:
@@ -164,40 +194,76 @@ class CherwellConnector(BaseConnector):
                 params=params
             )
         except Exception as e:
-            return RetVal(action_result.set_status( phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))))
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))))
+
+        if r.status_code == 401:
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching access token: {}".format(r.text)), r.status_code)
 
         if r.status_code == 200:
             return RetVal(phantom.APP_SUCCESS, r.content)
         return RetVal(action_result.set_status(phantom.APP_ERROR, "Error returned from server: {}".format(r.text)))
 
-    def _get_oauth_token(self, action_result):
-        data = {
-            'grant_type': 'password',
-            'client_id': self._client_id,
-            'username': self._username,
-            'password': self._password
+    def _get_oauth_token(self, action_result, refresh_token=False, force_new_token=False):
+        if not self._state.get('access_token') or force_new_token:
+            self.debug_print("Generating new token")
+            data = {
+                'grant_type': 'password',
+                'client_id': self._client_id,
+                'username': self._username,
+                'password': self._password
+            }
+        elif refresh_token:
+            self.debug_print("Generating new token using refresh token")
+            data = {
+                'grant_type': 'refresh',
+                'client_id': self._client_id,
+                'refresh_token': self._state.get('refresh_token')
+            }
+        else:
+            self.debug_print("Using old token")
+            return phantom.APP_SUCCESS, self._state.get('access_token')
+
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
         }
-        ret_val, response = self._make_rest_call(CHERWELL_API_TOKEN, action_result, form_data=data, method='post')
-        if phantom.is_fail(ret_val):
-            return ret_val
-        self._token = response
-        return ret_val
 
-    def _make_rest_call_helper(self, endpoint, action_result, headers=None, get_file=False, **kwargs):
+        response = requests.request("POST", self._base_url + CHERWELL_API_TOKEN, data=data, headers=headers)
+
+        if response.status_code == 401:
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching token"), response.text)
+
+        response_json = response.json()
+
+        self._state['access_token'] = response_json['access_token']
+        self._state['refresh_token'] = response_json['refresh_token']
+
+        return RetVal(action_result.set_status(phantom.APP_SUCCESS, "Successfully fetched token"), self._state.get('access_token'))
+
+    def _make_rest_call_wrapper(self, func):
         # Handle authentication before _make_rest_call
-        if not self._token:
-            ret_val = self._get_oauth_token(action_result)
-            if phantom.is_fail(ret_val):
-                return ret_val
-        if headers is None:
-            headers = {}
-        headers.update({
-            'Authorization': 'Bearer {}'.format(self._token['access_token'])
-        })
-        if get_file:
-            return self._make_rest_call_file(endpoint, action_result, headers=headers, **kwargs)
+        def _handle_authentication(action_result, *args, **kwargs):
+            ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result)
+            if phantom.is_fail(ret_val_oauth):
+                return ret_val_oauth, token_response
+            ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
 
-        return self._make_rest_call(endpoint, action_result, headers=headers, **kwargs)
+            if phantom.is_fail(ret_val) and ret_data == 401:
+                self.debug_print("Old token is not working")
+                # TODO: refresh_token = True, Dont know how to use refresh token
+                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, force_new_token=True)
+                if phantom.is_fail(ret_val_oauth):
+                    return ret_val_oauth, token_response
+            ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
+
+            if phantom.is_fail(ret_val) and ret_data == 401:
+                self.debug_print("Refresh token is also not working, generating new token")
+                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, force_new_token=True)
+                if phantom.is_fail(ret_val_oauth):
+                    return ret_val_oauth, token_response
+            ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
+
+            return ret_val, ret_data
+        return _handle_authentication
 
     def _get_customer_recid(self, action_result, full_name):
         ret_val, busobid_cid = self._get_busobid(action_result, 'CustomerInternal')
@@ -205,7 +271,7 @@ class CherwellConnector(BaseConnector):
             return RetVal(ret_val)
 
         endpoint = CHERWELL_API_GET_OBJECT_SCHEMA.format(busobid=busobid_cid)
-        ret_val, response = self._make_rest_call_helper(endpoint, action_result)
+        ret_val, response = self._make_rest_call(endpoint=endpoint, action_result=action_result)
         if phantom.is_fail(response):
             return RetVal(ret_val)
 
@@ -222,8 +288,8 @@ class CherwellConnector(BaseConnector):
             ]
         }
 
-        ret_val, response = self._make_rest_call_helper(
-            CHERWELL_API_GET_SEARCH_RESULT, action_result,
+        ret_val, response = self._make_rest_call(
+            endpoint=CHERWELL_API_GET_SEARCH_RESULT, action_result=action_result,
             data=search_request, method='post'
         )
         if phantom.is_fail(ret_val):
@@ -240,7 +306,7 @@ class CherwellConnector(BaseConnector):
 
     def _get_busobid(self, action_result, bus_obj):
         endpoint = CHERWELL_API_OBJ_SUMMARY.format(busobname=bus_obj)
-        ret_val, response = self._make_rest_call_helper(endpoint, action_result)
+        ret_val, response = self._make_rest_call(endpoint=endpoint, action_result=action_result)
         if phantom.is_fail(ret_val):
             return RetVal(ret_val)
 
@@ -281,8 +347,8 @@ class CherwellConnector(BaseConnector):
                 busobid=attachment['busObId'],
                 busobrecid=attachment['busObRecId']
             )
-            ret_val, response = self._make_rest_call_helper(
-                endpoint, action_result, get_file=True
+            ret_val, response = self._make_rest_call_file(
+                endpoint=endpoint, action_result=action_result, get_file=True
             )
             if phantom.is_fail(ret_val):
                 return ret_val
@@ -312,7 +378,7 @@ class CherwellConnector(BaseConnector):
     def _handle_test_connectivity(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
         self.save_progress("Validating Authorization Credentials...")
-        ret_val = self._get_oauth_token(action_result)
+        ret_val, token = self._get_oauth_token(action_result, force_new_token=True)
         if phantom.is_fail(ret_val):
             self.save_progress("Test Connectivity Failed")
             return ret_val
@@ -324,7 +390,7 @@ class CherwellConnector(BaseConnector):
         user_record_id = param['id']
         endpoint = CHERWELL_GET_USER_RECORD_ID.format(recid=user_record_id)
 
-        ret_val, response = self._make_rest_call_helper(endpoint, action_result)
+        ret_val, response = self._make_rest_call(endpoint, action_result)
         if phantom.is_fail(ret_val):
             return ret_val
         self._mogrify_fields(action_result, response)
@@ -338,7 +404,7 @@ class CherwellConnector(BaseConnector):
             'loginidfilter': 'both'
         }
 
-        ret_val, response = self._make_rest_call_helper(CHERWELL_LIST_USERS, action_result, params=params)
+        ret_val, response = self._make_rest_call(endpoint=CHERWELL_LIST_USERS, action_result=action_result, params=params)
         if phantom.is_fail(ret_val):
             return ret_val
 
@@ -376,8 +442,8 @@ class CherwellConnector(BaseConnector):
             ]
         }
 
-        ret_val, response = self._make_rest_call_helper(
-            CHERWELL_GET_ATTACHMENTS, action_result, data=attachment_search_body, method="post"
+        ret_val, response = self._make_rest_call(
+            endpoint=CHERWELL_GET_ATTACHMENTS, action_result=action_result, data=attachment_search_body, method="post"
         )
         if phantom.is_fail(ret_val):
             return ret_val
@@ -423,12 +489,14 @@ class CherwellConnector(BaseConnector):
                 publicid=public_id
             )
 
-            ret_val, response = self._make_rest_call_helper(endpoint, action_result)
+            ret_val, response = self._make_rest_call(endpoint, action_result)
             if phantom.is_fail(ret_val):
                 return ret_val
 
             self._set_field_values(response['fields'], field_value_map)
-            ret_val, response = self._make_rest_call_helper(CHERWELL_API_SAVE_OBJECT, action_result, data=response, method="post")
+            ret_val, response = self._make_rest_call(
+                endpoint=CHERWELL_API_SAVE_OBJECT, action_result=action_result, data=response, method="post"
+            )
             if phantom.is_fail(ret_val):
                 return ret_val
             action_result.add_data(response)
@@ -454,8 +522,8 @@ class CherwellConnector(BaseConnector):
                 totalsize=file_info['size']
             )
             headers = {'Content-Type': 'application/octet-stream'}
-            ret_val, response = self._make_rest_call_helper(
-                endpoint, action_result, form_data=file_bytes, headers=headers, method='post'
+            ret_val, response = self._make_rest_call(
+                endpoint=endpoint, action_result=action_result, form_data=file_bytes, headers=headers, method='post'
             )
             if phantom.is_fail(ret_val):
                 return ret_val
@@ -502,7 +570,9 @@ class CherwellConnector(BaseConnector):
         }
 
         # Then we need to get the template for an incident
-        ret_val, response = self._make_rest_call_helper(CHERWELL_API_GET_OBJECT_TEMPLATE, action_result, data=body, method="post")
+        ret_val, response = self._make_rest_call(
+            endpoint=CHERWELL_API_GET_OBJECT_TEMPLATE, action_result=action_result, data=body, method="post"
+        )
         if phantom.is_fail(ret_val):
             return ret_val
 
@@ -521,7 +591,7 @@ class CherwellConnector(BaseConnector):
         }
 
         # After modifying the tempalte, now POST it over
-        ret_val, response = self._make_rest_call_helper(CHERWELL_API_SAVE_OBJECT, action_result, data=body, method="post")
+        ret_val, response = self._make_rest_call(endpoint=CHERWELL_API_SAVE_OBJECT, action_result=action_result, data=body, method="post")
         if phantom.is_fail(ret_val):
             return ret_val
 
@@ -545,7 +615,7 @@ class CherwellConnector(BaseConnector):
             publicid=public_id
         )
 
-        ret_val, response = self._make_rest_call_helper(endpoint, action_result)
+        ret_val, response = self._make_rest_call(endpoint, action_result)
         if phantom.is_fail(ret_val):
             return ret_val
 
@@ -570,7 +640,9 @@ class CherwellConnector(BaseConnector):
             'searchText': search_text
         }
 
-        ret_val, response = self._make_rest_call_helper(CHERWELL_API_QUICK_SEARCH_RESULTS, action_result, method="post", data=search_query)
+        ret_val, response = self._make_rest_call(
+            endpoint=CHERWELL_API_QUICK_SEARCH_RESULTS, action_result=action_result, method="post", data=search_query
+        )
         if phantom.is_fail(ret_val):
             return ret_val
 
@@ -625,6 +697,9 @@ class CherwellConnector(BaseConnector):
         self._password = config['password']
         self._client_id = config['client_id']
         self._state = self.load_state()
+
+        self._make_rest_call = self._make_rest_call_wrapper(self._make_rest_call)
+        self._make_rest_call_file = self._make_rest_call_wrapper(self._make_rest_call_file)
         return phantom.APP_SUCCESS
 
     def finalize(self):
@@ -636,8 +711,10 @@ class CherwellConnector(BaseConnector):
 
 if __name__ == '__main__':
 
-    import pudb
     import argparse
+    from sys import exit
+
+    import pudb
 
     pudb.set_trace()
 
@@ -653,16 +730,17 @@ if __name__ == '__main__':
     username = args.username
     password = args.password
 
-    if (username is not None and password is None):
+    if username is not None and password is None:
 
         # User specified a username but not a password, so ask
         import getpass
         password = getpass.getpass("Password: ")
 
-    if (username and password):
+    if username and password:
+        login_url = BaseConnector._get_phantom_base_url() + "login"
         try:
-            print ("Accessing the Login page")
-            r = requests.get("https://127.0.0.1/login", verify=False)
+            print("Accessing the Login page")
+            r = requests.get(login_url, verify=False)
             csrftoken = r.cookies['csrftoken']
 
             data = dict()
@@ -672,13 +750,13 @@ if __name__ == '__main__':
 
             headers = dict()
             headers['Cookie'] = 'csrftoken=' + csrftoken
-            headers['Referer'] = 'https://127.0.0.1/login'
+            headers['Referer'] = login_url
 
-            print ("Logging into Platform to get the session id")
-            r2 = requests.post("https://127.0.0.1/login", verify=False, data=data, headers=headers)
+            print("Logging into Platform to get the session id")
+            r2 = requests.post(login_url, verify=False, data=data, headers=headers)
             session_id = r2.cookies['sessionid']
         except Exception as e:
-            print ("Unable to get session id from the platfrom. Error: " + str(e))
+            print("Unable to get session id from the platfrom. Error: " + str(e))
             exit(1)
 
     with open(args.input_test_json) as f:
@@ -689,10 +767,10 @@ if __name__ == '__main__':
         connector = CherwellConnector()
         connector.print_progress_message = True
 
-        if (session_id is not None):
+        if session_id is not None:
             in_json['user_session_token'] = session_id
 
         ret_val = connector._handle_action(json.dumps(in_json), None)
-        print (json.dumps(json.loads(ret_val), indent=4))
+        print(json.dumps(json.loads(ret_val), indent=4))
 
     exit(0)
