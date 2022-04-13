@@ -35,7 +35,6 @@ class RetVal(tuple):
 
 
 class CherwellConnector(BaseConnector):
-
     def __init__(self):
 
         # Call the BaseConnectors init first
@@ -62,16 +61,15 @@ class CherwellConnector(BaseConnector):
         try:
             soup = BeautifulSoup(response.text, "html.parser")
             error_text = soup.text
-            split_lines = error_text.split('\n')
+            split_lines = error_text.split("\n")
             split_lines = [x.strip() for x in split_lines if x.strip()]
-            error_text = '\n'.join(split_lines)
+            error_text = "\n".join(split_lines)
         except:
             error_text = "Cannot parse error details"
 
-        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code,
-                error_text)
+        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
 
-        message = message.replace('{', '{{').replace('}', '}}')
+        message = message.replace("{", "{{").replace("}", "}}")
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
@@ -88,30 +86,29 @@ class CherwellConnector(BaseConnector):
             return RetVal(phantom.APP_SUCCESS, resp_json)
 
         # You should process the error returned in the json
-        message = "Error from server. Status Code: {0} Data from server: {1}".format(
-                r.status_code, r.text.replace('{', '{{').replace('}', '}}'))
+        message = "Error from server. Status Code: {0} Data from server: {1}".format(r.status_code, r.text.replace("{", "{{").replace("}", "}}"))
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
     def _process_response(self, r, action_result):
 
         # store the r_text in debug data, it will get dumped in the logs if the action fails
-        if hasattr(action_result, 'add_debug_data'):
-            action_result.add_debug_data({'r_status_code': r.status_code})
-            action_result.add_debug_data({'r_text': r.text})
-            action_result.add_debug_data({'r_headers': r.headers})
+        if hasattr(action_result, "add_debug_data"):
+            action_result.add_debug_data({"r_status_code": r.status_code})
+            action_result.add_debug_data({"r_text": r.text})
+            action_result.add_debug_data({"r_headers": r.headers})
 
         # Process each 'Content-Type' of response separately
 
         # Process a json response
-        if 'json' in r.headers.get('Content-Type', ''):
+        if "json" in r.headers.get("Content-Type", ""):
             return self._process_json_response(r, action_result)
 
         # Process an HTML resonse, Do this no matter what the api talks.
         # There is a high chance of a PROXY in between phantom and the rest of
         # world, in case of errors, PROXY's return HTML, this function parses
         # the error and adds it to the action_result.
-        if 'html' in r.headers.get('Content-Type', ''):
+        if "html" in r.headers.get("Content-Type", ""):
             return self._process_html_response(r, action_result)
 
         # it's not content-type that is to be parsed, handle an empty response
@@ -120,7 +117,8 @@ class CherwellConnector(BaseConnector):
 
         # everything else is actually an error at this point
         message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
-                r.status_code, r.text.replace('{', '{{').replace('}', '}}'))
+            r.status_code, r.text.replace("{", "{{").replace("}", "}}")
+        )
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
@@ -129,15 +127,11 @@ class CherwellConnector(BaseConnector):
 
         if not headers:
             headers = {}
-        headers.update({
-            'Authorization': 'Bearer {}'.format(self._state.get('access_token'))
-        })
+        headers.update({"Authorization": "Bearer {}".format(self._state.get("access_token"))})
 
         if not params:
             params = {}
-        params.update({
-            'api_key': self.get_config()['client_id']
-        })
+        params.update({"api_key": self.get_config()["client_id"]})
 
         try:
             request_func = getattr(requests, method)
@@ -148,13 +142,7 @@ class CherwellConnector(BaseConnector):
         url = self._base_url + endpoint
 
         try:
-            r = request_func(
-                url,
-                json=data,
-                data=form_data,
-                headers=headers,
-                params=params
-            )
+            r = request_func(url, json=data, data=form_data, headers=headers, params=params)
         except Exception as e:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
 
@@ -169,15 +157,11 @@ class CherwellConnector(BaseConnector):
 
         if not headers:
             headers = {}
-        headers.update({
-            'Authorization': 'Bearer {}'.format(self._state.get('access_token'))
-        })
+        headers.update({"Authorization": "Bearer {}".format(self._state.get("access_token"))})
 
         if not params:
             params = {}
-        params.update({
-            'api_key': self.get_config()['client_id']
-        })
+        params.update({"api_key": self.get_config()["client_id"]})
 
         try:
             request_func = getattr(requests, method)
@@ -186,13 +170,7 @@ class CherwellConnector(BaseConnector):
 
         url = self._base_url + endpoint
         try:
-            r = request_func(
-                url,
-                json=data,
-                data=form_data,
-                headers=headers,
-                params=params
-            )
+            r = request_func(url, json=data, data=form_data, headers=headers, params=params)
         except Exception as e:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))))
 
@@ -204,28 +182,17 @@ class CherwellConnector(BaseConnector):
         return RetVal(action_result.set_status(phantom.APP_ERROR, "Error returned from server: {}".format(r.text)))
 
     def _get_oauth_token(self, action_result, refresh_token=False, force_new_token=False):
-        if not self._state.get('access_token') or force_new_token:
+        if not self._state.get("access_token") or force_new_token:
             self.debug_print("Generating new token")
-            data = {
-                'grant_type': 'password',
-                'client_id': self._client_id,
-                'username': self._username,
-                'password': self._password
-            }
+            data = {"grant_type": "password", "client_id": self._client_id, "username": self._username, "password": self._password}
         elif refresh_token:
             self.debug_print("Generating new token using refresh token")
-            data = {
-                'grant_type': 'refresh',
-                'client_id': self._client_id,
-                'refresh_token': self._state.get('refresh_token')
-            }
+            data = {"grant_type": "refresh", "client_id": self._client_id, "refresh_token": self._state.get("refresh_token")}
         else:
             self.debug_print("Using old token")
-            return phantom.APP_SUCCESS, self._state.get('access_token')
+            return phantom.APP_SUCCESS, self._state.get("access_token")
 
-        headers = {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         response = requests.request("POST", self._base_url + CHERWELL_API_TOKEN, data=data, headers=headers)
 
@@ -234,10 +201,10 @@ class CherwellConnector(BaseConnector):
 
         response_json = response.json()
 
-        self._state['access_token'] = response_json['access_token']
-        self._state['refresh_token'] = response_json['refresh_token']
+        self._state["access_token"] = response_json["access_token"]
+        self._state["refresh_token"] = response_json["refresh_token"]
 
-        return RetVal(action_result.set_status(phantom.APP_SUCCESS, "Successfully fetched token"), self._state.get('access_token'))
+        return RetVal(action_result.set_status(phantom.APP_SUCCESS, "Successfully fetched token"), self._state.get("access_token"))
 
     def _make_rest_call_wrapper(self, func):
         # Handle authentication before _make_rest_call
@@ -263,10 +230,11 @@ class CherwellConnector(BaseConnector):
             ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
 
             return ret_val, ret_data
+
         return _handle_authentication
 
     def _get_customer_recid(self, action_result, full_name):
-        ret_val, busobid_cid = self._get_busobid(action_result, 'CustomerInternal')
+        ret_val, busobid_cid = self._get_busobid(action_result, "CustomerInternal")
         if phantom.is_fail(ret_val):
             return RetVal(ret_val)
 
@@ -275,32 +243,20 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(response):
             return RetVal(ret_val)
 
-        field_id = self._get_field_id(response['fieldDefinitions'], 'Full name')
+        field_id = self._get_field_id(response["fieldDefinitions"], "Full name")
 
-        search_request = {
-            'busObId': busobid_cid,
-            'filters': [
-                {
-                    'fieldId': field_id,
-                    'operator': 'eq',
-                    'value': full_name
-                }
-            ]
-        }
+        search_request = {"busObId": busobid_cid, "filters": [{"fieldId": field_id, "operator": "eq", "value": full_name}]}
 
         ret_val, response = self._make_rest_call(
-            endpoint=CHERWELL_API_GET_SEARCH_RESULT, action_result=action_result,
-            data=search_request, method='post'
+            endpoint=CHERWELL_API_GET_SEARCH_RESULT, action_result=action_result, data=search_request, method="post"
         )
         if phantom.is_fail(ret_val):
             return RetVal(ret_val)
 
         try:
-            recid = response['businessObjects'][0]['busObRecId']
+            recid = response["businessObjects"][0]["busObRecId"]
         except IndexError:
-            return RetVal(
-                action_result.set_status(phantom.APP_ERROR, "Unable to find user by that name")
-            )
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to find user by that name"))
 
         return RetVal(phantom.APP_SUCCESS, recid)
 
@@ -311,7 +267,7 @@ class CherwellConnector(BaseConnector):
             return RetVal(ret_val)
 
         try:
-            busobid = response[0]['busObId']
+            busobid = response[0]["busObId"]
         except:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to retrieve Business Object ID"))
 
@@ -319,60 +275,51 @@ class CherwellConnector(BaseConnector):
 
     def _mogrify_fields(self, action_result, business_object):
         # Transform a list of json objects into a dictionary
-        fields = business_object['fields']
-        fields_dict = {x.pop('name'): x for x in fields}
-        business_object['fields'] = fields_dict
+        fields = business_object["fields"]
+        fields_dict = {x.pop("name"): x for x in fields}
+        business_object["fields"] = fields_dict
 
     def _get_field_id(self, fields, display_name):
         field_id = None
         for field in fields:
-            if field['displayName'] == display_name:
-                field_id = field['fieldId']
+            if field["displayName"] == display_name:
+                field_id = field["fieldId"]
         return field_id
 
     def _set_field_values(self, fields, field_value_map):
         for f in fields:
-            name = f['name']
+            name = f["name"]
             new_value = field_value_map.get(name)
             if new_value:
-                f['value'] = new_value
-                f['dirty'] = True
+                f["value"] = new_value
+                f["dirty"] = True
 
     def _download_save_attachments(self, action_result, attachments):
         for attachment in attachments:
-            if attachment['attachmentType'] != 0:
+            if attachment["attachmentType"] != 0:
                 continue  # It's not a file
             endpoint = CHERWELL_GET_ATTACHMENT.format(
-                attachmentid=attachment['attachmentId'],
-                busobid=attachment['busObId'],
-                busobrecid=attachment['busObRecId']
+                attachmentid=attachment["attachmentId"], busobid=attachment["busObId"], busobrecid=attachment["busObRecId"]
             )
-            ret_val, response = self._make_rest_call_file(
-                endpoint=endpoint, action_result=action_result, get_file=True
-            )
+            ret_val, response = self._make_rest_call_file(endpoint=endpoint, action_result=action_result, get_file=True)
             if phantom.is_fail(ret_val):
                 return ret_val
 
-            if hasattr(Vault, 'get_vault_tmp_dir'):
+            if hasattr(Vault, "get_vault_tmp_dir"):
                 temp_dir = Vault.get_vault_tmp_dir()
             else:
-                temp_dir = '/opt/phantom/vault/tmp'
+                temp_dir = "/opt/phantom/vault/tmp"
 
-            file_path = temp_dir + '/{}'.format(attachment['attachmentFileName'])
-            with open(file_path, 'wb+') as fp:
+            file_path = temp_dir + "/{}".format(attachment["attachmentFileName"])
+            with open(file_path, "wb+") as fp:
                 fp.write(response)
                 fp.close()
                 resp = Vault.add_attachment(file_path, self.get_container_id())
 
-            if not resp['succeeded']:
-                return action_result.set_status(
-                    phantom.APP_ERROR,
-                    "Unable to add file to vault: {}".format(str(resp['message']))
-                )
+            if not resp["succeeded"]:
+                return action_result.set_status(phantom.APP_ERROR, "Unable to add file to vault: {}".format(str(resp["message"])))
 
-            attachment.update({
-                'vault_id': resp['vault_id']
-            })
+            attachment.update({"vault_id": resp["vault_id"]})
         return phantom.APP_SUCCESS
 
     def _handle_test_connectivity(self, param):
@@ -387,7 +334,7 @@ class CherwellConnector(BaseConnector):
 
     def _handle_get_user(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        user_record_id = param['id']
+        user_record_id = param["id"]
         endpoint = CHERWELL_GET_USER_RECORD_ID.format(recid=user_record_id)
 
         ret_val, response = self._make_rest_call(endpoint, action_result)
@@ -400,16 +347,14 @@ class CherwellConnector(BaseConnector):
     def _handle_list_users(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
 
-        params = {
-            'loginidfilter': 'both'
-        }
+        params = {"loginidfilter": "both"}
 
         ret_val, response = self._make_rest_call(endpoint=CHERWELL_LIST_USERS, action_result=action_result, params=params)
         if phantom.is_fail(ret_val):
             return ret_val
 
         # Format each user in the list
-        for user in response['users']:
+        for user in response["users"]:
             self._mogrify_fields(action_result, user)
             action_result.add_data(user)
 
@@ -417,9 +362,9 @@ class CherwellConnector(BaseConnector):
 
     def _handle_get_attachments(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        public_id = param['id']
-        save_attachmets = param.get('save_to_vault', False)
-        bus_obj = param.get('object', 'Incident')
+        public_id = param["id"]
+        save_attachmets = param.get("save_to_vault", False)
+        bus_obj = param.get("object", "Incident")
         ret_val, busobid = self._get_busobid(action_result, bus_obj)
         if phantom.is_fail(ret_val):
             return ret_val
@@ -427,19 +372,8 @@ class CherwellConnector(BaseConnector):
         attachment_search_body = {
             "busObId": busobid,
             "busObPublicId": public_id,
-            "types": [
-                "None",
-                "File",
-                "FileManagerFile",
-                "BusOb",
-                "History",
-                "Other"
-            ],
-            "attachmentTypes": [
-                "Imported",
-                "Linked",
-                "URL"
-            ]
+            "types": ["None", "File", "FileManagerFile", "BusOb", "History", "Other"],
+            "attachmentTypes": ["Imported", "Linked", "URL"],
         }
 
         ret_val, response = self._make_rest_call(
@@ -448,11 +382,11 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
-        for result in response['attachments']:
+        for result in response["attachments"]:
             action_result.add_data(result)
 
         if save_attachmets:
-            ret_val = self._download_save_attachments(action_result, response['attachments'])
+            ret_val = self._download_save_attachments(action_result, response["attachments"])
             if phantom.is_fail(ret_val):
                 return ret_val
 
@@ -460,9 +394,9 @@ class CherwellConnector(BaseConnector):
 
     def _handle_update_ticket(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        public_id = param['id']
-        vault_id = param.get('file')
-        other = param.get('other')
+        public_id = param["id"]
+        vault_id = param.get("file")
+        other = param.get("other")
         if other is None and vault_id is None:
             return action_result.set_status(phantom.APP_ERROR, "There is nothing to be updated")
 
@@ -470,30 +404,25 @@ class CherwellConnector(BaseConnector):
             try:
                 other_dict = json.loads(other)
             except Exception as e:
-                return action_result.set_status(
-                    phantom.APP_ERROR, "Error loading JSON Object", e
-                )
+                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", e)
             field_value_map = CaseInsensitiveDict()
             field_value_map.update(other_dict)
         else:
             field_value_map = None
 
-        bus_obj = param.get('object', 'Incident')
+        bus_obj = param.get("object", "Incident")
         ret_val, busobid = self._get_busobid(action_result, bus_obj)
         if phantom.is_fail(ret_val):
             return ret_val
 
         if field_value_map:
-            endpoint = CHERWELL_API_GET_OBJECT.format(
-                busobid=busobid,
-                publicid=public_id
-            )
+            endpoint = CHERWELL_API_GET_OBJECT.format(busobid=busobid, publicid=public_id)
 
             ret_val, response = self._make_rest_call(endpoint, action_result)
             if phantom.is_fail(ret_val):
                 return ret_val
 
-            self._set_field_values(response['fields'], field_value_map)
+            self._set_field_values(response["fields"], field_value_map)
             ret_val, response = self._make_rest_call(
                 endpoint=CHERWELL_API_SAVE_OBJECT, action_result=action_result, data=response, method="post"
             )
@@ -505,40 +434,32 @@ class CherwellConnector(BaseConnector):
             try:
                 file_info = Vault.get_file_info(vault_id=vault_id)[0]
             except Exception:
-                return action_result.set_status(
-                    phantom.APP_ERROR, "Unable to retrieve vault file info"
-                )
+                return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
             try:
-                file_bytes = open(file_info['path'], 'rb').read()
+                file_bytes = open(file_info["path"], "rb").read()
             except Exception as e:
-                return action_result.set_status(
-                    phantom.APP_ERROR, "Unable to read file", e
-                )
+                return action_result.set_status(phantom.APP_ERROR, "Unable to read file", e)
             endpoint = CHERWELL_API_UPLOAD_ATTACHMENT.format(
-                filename=file_info['name'],
-                busobid=busobid,
-                publicid=public_id,
-                offset='0',
-                totalsize=file_info['size']
+                filename=file_info["name"], busobid=busobid, publicid=public_id, offset="0", totalsize=file_info["size"]
             )
-            headers = {'Content-Type': 'application/octet-stream'}
+            headers = {"Content-Type": "application/octet-stream"}
             ret_val, response = self._make_rest_call(
-                endpoint=endpoint, action_result=action_result, form_data=file_bytes, headers=headers, method='post'
+                endpoint=endpoint, action_result=action_result, form_data=file_bytes, headers=headers, method="post"
             )
             if phantom.is_fail(ret_val):
                 return ret_val
 
             summary = action_result.update_summary({})
-            summary['attachment_id'] = response
+            summary["attachment_id"] = response
 
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully updated incident")
 
     def _handle_create_ticket(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        description = param['description']
-        priority = param['priority']
-        public_id = param.get('user_public_id')
-        record_id = param.get('user_record_id')
+        description = param["description"]
+        priority = param["priority"]
+        public_id = param.get("user_public_id")
+        record_id = param.get("user_record_id")
 
         # Full Name is same customer public id
         if not record_id and public_id:
@@ -546,28 +467,22 @@ class CherwellConnector(BaseConnector):
         elif not record_id and not public_id:
             return action_result.set_status(phantom.APP_ERROR, "Must specify either a Record ID or Pubic ID")
 
-        other = param.get('other')
+        other = param.get("other")
         if other:
             try:
                 other_dict = json.loads(other)
             except Exception as e:
-                return action_result.set_status(
-                    phantom.APP_ERROR, "Error loading JSON Object", e
-                )
+                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", e)
         else:
             other_dict = {}
 
         # First we need to get the object ID for an "Incident"
-        bus_obj = param.get('object', 'Incident')
+        bus_obj = param.get("object", "Incident")
         ret_val, busobid_incident = self._get_busobid(action_result, bus_obj)
         if phantom.is_fail(ret_val):
             return ret_val
 
-        body = {
-            'busObId': busobid_incident,
-            'includeRequired': True,
-            'includeAll': True
-        }
+        body = {"busObId": busobid_incident, "includeRequired": True, "includeAll": True}
 
         # Then we need to get the template for an incident
         ret_val, response = self._make_rest_call(
@@ -577,18 +492,15 @@ class CherwellConnector(BaseConnector):
             return ret_val
 
         field_value_map = CaseInsensitiveDict()
-        field_value_map['description'] = description
-        field_value_map['priority'] = priority
-        field_value_map['customerrecid'] = record_id
+        field_value_map["description"] = description
+        field_value_map["priority"] = priority
+        field_value_map["customerrecid"] = record_id
         field_value_map.update(other_dict)
 
-        fields = response['fields']
+        fields = response["fields"]
         self._set_field_values(fields, field_value_map)
 
-        body = {
-            'busObId': busobid_incident,
-            'fields': fields
-        }
+        body = {"busObId": busobid_incident, "fields": fields}
 
         # After modifying the tempalte, now POST it over
         ret_val, response = self._make_rest_call(endpoint=CHERWELL_API_SAVE_OBJECT, action_result=action_result, data=body, method="post")
@@ -597,23 +509,20 @@ class CherwellConnector(BaseConnector):
 
         action_result.add_data(response)
         summary = action_result.update_summary({})
-        summary['id'] = response['busObPublicId']
+        summary["id"] = response["busObPublicId"]
 
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Created Ticket")
 
     def _handle_get_ticket(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        public_id = param['id']
-        bus_obj = param.get('object', 'Incident')
+        public_id = param["id"]
+        bus_obj = param.get("object", "Incident")
 
         ret_val, busobid = self._get_busobid(action_result, bus_obj)
         if phantom.is_fail(ret_val):
             return ret_val
 
-        endpoint = CHERWELL_API_GET_OBJECT.format(
-            busobid=busobid,
-            publicid=public_id
-        )
+        endpoint = CHERWELL_API_GET_OBJECT.format(busobid=busobid, publicid=public_id)
 
         ret_val, response = self._make_rest_call(endpoint, action_result)
         if phantom.is_fail(ret_val):
@@ -626,19 +535,14 @@ class CherwellConnector(BaseConnector):
 
     def _handle_list_tickets(self, param):
         action_result = self.add_action_result(ActionResult(dict(param)))
-        bus_obj = param.get('object', 'Incident')
-        search_text = param.get('search_text', '')
+        bus_obj = param.get("object", "Incident")
+        search_text = param.get("search_text", "")
 
         ret_val, busobid = self._get_busobid(action_result, bus_obj)
         if phantom.is_fail(ret_val):
             return ret_val
 
-        search_query = {
-            'busObIds': [
-                busobid
-            ],
-            'searchText': search_text
-        }
+        search_query = {"busObIds": [busobid], "searchText": search_text}
 
         ret_val, response = self._make_rest_call(
             endpoint=CHERWELL_API_QUICK_SEARCH_RESULTS, action_result=action_result, method="post", data=search_query
@@ -646,8 +550,8 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
-        for group in response['groups']:
-            for item in group['simpleResultsListItems']:
+        for group in response["groups"]:
+            for item in group["simpleResultsListItems"]:
                 action_result.add_data(item)
 
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Listed Tickets")
@@ -661,22 +565,22 @@ class CherwellConnector(BaseConnector):
 
         self.debug_print("action_id", self.get_action_identifier())
 
-        if action_id == 'test_connectivity':
+        if action_id == "test_connectivity":
             ret_val = self._handle_test_connectivity(param)
 
-        elif action_id == 'create_ticket':
+        elif action_id == "create_ticket":
             ret_val = self._handle_create_ticket(param)
 
-        elif action_id == 'get_ticket':
+        elif action_id == "get_ticket":
             ret_val = self._handle_get_ticket(param)
 
-        elif action_id == 'list_tickets':
+        elif action_id == "list_tickets":
             ret_val = self._handle_list_tickets(param)
 
-        elif action_id == 'update_ticket':
+        elif action_id == "update_ticket":
             ret_val = self._handle_update_ticket(param)
 
-        elif action_id == 'get_attachments':
+        elif action_id == "get_attachments":
             ret_val = self._handle_get_attachments(param)
 
         elif action_id == "get_user":
@@ -692,10 +596,10 @@ class CherwellConnector(BaseConnector):
         # Load the state in initialize, use it to store data
         # that needs to be accessed across actions
         config = self.get_config()
-        self._base_url = config['api_url'].rstrip('/')
-        self._username = config['username']
-        self._password = config['password']
-        self._client_id = config['client_id']
+        self._base_url = config["api_url"].rstrip("/")
+        self._username = config["username"]
+        self._password = config["password"]
+        self._client_id = config["client_id"]
         self._state = self.load_state()
 
         self._make_rest_call = self._make_rest_call_wrapper(self._make_rest_call)
@@ -709,7 +613,7 @@ class CherwellConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import argparse
     from sys import exit
@@ -720,9 +624,9 @@ if __name__ == '__main__':
 
     argparser = argparse.ArgumentParser()
 
-    argparser.add_argument('input_test_json', help='Input Test JSON file')
-    argparser.add_argument('-u', '--username', help='username', required=False)
-    argparser.add_argument('-p', '--password', help='password', required=False)
+    argparser.add_argument("input_test_json", help="Input Test JSON file")
+    argparser.add_argument("-u", "--username", help="username", required=False)
+    argparser.add_argument("-p", "--password", help="password", required=False)
 
     args = argparser.parse_args()
     session_id = None
@@ -734,6 +638,7 @@ if __name__ == '__main__':
 
         # User specified a username but not a password, so ask
         import getpass
+
         password = getpass.getpass("Password: ")
 
     if username and password:
@@ -741,20 +646,20 @@ if __name__ == '__main__':
         try:
             print("Accessing the Login page")
             r = requests.get(login_url, verify=False)
-            csrftoken = r.cookies['csrftoken']
+            csrftoken = r.cookies["csrftoken"]
 
             data = dict()
-            data['username'] = username
-            data['password'] = password
-            data['csrfmiddlewaretoken'] = csrftoken
+            data["username"] = username
+            data["password"] = password
+            data["csrfmiddlewaretoken"] = csrftoken
 
             headers = dict()
-            headers['Cookie'] = 'csrftoken=' + csrftoken
-            headers['Referer'] = login_url
+            headers["Cookie"] = "csrftoken=" + csrftoken
+            headers["Referer"] = login_url
 
             print("Logging into Platform to get the session id")
             r2 = requests.post(login_url, verify=False, data=data, headers=headers)
-            session_id = r2.cookies['sessionid']
+            session_id = r2.cookies["sessionid"]
         except Exception as e:
             print("Unable to get session id from the platfrom. Error: " + str(e))
             exit(1)
@@ -768,7 +673,7 @@ if __name__ == '__main__':
         connector.print_progress_message = True
 
         if session_id is not None:
-            in_json['user_session_token'] = session_id
+            in_json["user_session_token"] = session_id
 
         ret_val = connector._handle_action(json.dumps(in_json), None)
         print(json.dumps(json.loads(ret_val), indent=4))
