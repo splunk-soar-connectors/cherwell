@@ -337,7 +337,7 @@ class CherwellConnector(BaseConnector):
         user_record_id = param["id"]
         endpoint = CHERWELL_GET_USER_RECORD_ID.format(recid=user_record_id)
 
-        ret_val, response = self._make_rest_call(endpoint, action_result)
+        ret_val, response = self._make_rest_call(endpoint=endpoint, action_result=action_result)
         if phantom.is_fail(ret_val):
             return ret_val
         self._mogrify_fields(action_result, response)
@@ -418,7 +418,7 @@ class CherwellConnector(BaseConnector):
         if field_value_map:
             endpoint = CHERWELL_API_GET_OBJECT.format(busobid=busobid, publicid=public_id)
 
-            ret_val, response = self._make_rest_call(endpoint, action_result)
+            ret_val, response = self._make_rest_call(endpoint=endpoint, action_result=action_result)
             if phantom.is_fail(ret_val):
                 return ret_val
 
@@ -524,7 +524,7 @@ class CherwellConnector(BaseConnector):
 
         endpoint = CHERWELL_API_GET_OBJECT.format(busobid=busobid, publicid=public_id)
 
-        ret_val, response = self._make_rest_call(endpoint, action_result)
+        ret_val, response = self._make_rest_call(endpoint=endpoint, action_result=action_result)
         if phantom.is_fail(ret_val):
             return ret_val
 
