@@ -187,7 +187,7 @@ class CherwellConnector(BaseConnector):
             data = {"grant_type": "password", "client_id": self._client_id, "username": self._username, "password": self._password}
         elif refresh_token:
             self.debug_print("Generating new token using refresh token")
-            data = {"grant_type": "refresh", "client_id": self._client_id, "refresh_token": self._state.get("refresh_token")}
+            data = {"grant_type": "refresh_token", "client_id": self._client_id, "refresh_token": self._state.get("refresh_token")}
         else:
             self.debug_print("Using old token")
             return phantom.APP_SUCCESS, self._state.get("access_token")
@@ -196,8 +196,12 @@ class CherwellConnector(BaseConnector):
 
         response = requests.request("POST", self._base_url + CHERWELL_API_TOKEN, data=data, headers=headers)
 
-        if response.status_code == 401:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching token"), response.text)
+        if response.status_code != 200:
+            if refresh_token:
+                # Request for fetching new token from refresh token failed, so try fetching new token forcefully
+                return self._get_oauth_token(action_result=action_result, force_new_token=True)
+            else:
+                return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching token"), response.text)
 
         response_json = response.json()
 
@@ -216,8 +220,7 @@ class CherwellConnector(BaseConnector):
 
             if phantom.is_fail(ret_val) and ret_data == 401:
                 self.debug_print("Old token is not working")
-                # TODO: refresh_token = True, Dont know how to use refresh token
-                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, force_new_token=True)
+                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, refresh_token=True)
                 if phantom.is_fail(ret_val_oauth):
                     return ret_val_oauth, token_response
             ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
@@ -227,6 +230,7 @@ class CherwellConnector(BaseConnector):
                 ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, force_new_token=True)
                 if phantom.is_fail(ret_val_oauth):
                     return ret_val_oauth, token_response
+
             ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
 
             return ret_val, ret_data
