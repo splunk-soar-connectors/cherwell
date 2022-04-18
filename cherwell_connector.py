@@ -194,7 +194,7 @@ class CherwellConnector(BaseConnector):
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-        response = requests.request("POST", self._base_url + CHERWELL_API_TOKEN, data=data, headers=headers)
+        response = requests.request("POST", self._base_url + CHERWELL_API_TOKEN, data=data, headers=headers)  # nosemgrep
 
         if response.status_code != 200:
             if refresh_token:
@@ -669,7 +669,7 @@ if __name__ == "__main__":
         login_url = BaseConnector._get_phantom_base_url() + "login"
         try:
             print("Accessing the Login page")
-            r = requests.get(login_url, verify=False)
+            r = requests.get(login_url, verify=False)   # nosemgrep
             csrftoken = r.cookies["csrftoken"]
 
             data = dict()
@@ -682,7 +682,7 @@ if __name__ == "__main__":
             headers["Referer"] = login_url
 
             print("Logging into Platform to get the session id")
-            r2 = requests.post(login_url, verify=False, data=data, headers=headers)
+            r2 = requests.post(login_url, verify=False, data=data, headers=headers)  # nosemgrep
             session_id = r2.cookies["sessionid"]
         except Exception as e:
             print("Unable to get session id from the platfrom. Error: " + str(e))
