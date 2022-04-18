@@ -1657,7 +1657,7 @@
                     "contains": [
                         "cherwell customer rec id"
                     ],
-                    "order": 1
+                    "order": 0
                 }
             },
             "output": [
@@ -3449,7 +3449,7 @@
             "action": "update ticket",
             "identifier": "update_ticket",
             "description": "Update an incident",
-            "verbose": "The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in the incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{\"Category\": \"Security Incident\"}</code>",
+            "verbose": "The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in the incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{\"Category\": \"Security Incident\"}</code>.",
             "type": "generic",
             "read_only": false,
             "parameters": {
@@ -3588,7 +3588,7 @@
             "action": "create ticket",
             "identifier": "create_ticket",
             "description": "Create an incident",
-            "verbose": "Either a Public ID or a Record ID for a user must be used. When possible, try to use the Record ID over the Public ID. If both are present, the Public ID will be ignored.<br> The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in an incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{\"Category\": \"Security Incident\"}</code>",
+            "verbose": "Either a Public ID or a Record ID for a user must be used. When possible, try to use the Record ID over the Public ID. If both are present, the Public ID will be ignored.<br> The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in an incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{\"Category\": \"Security Incident\"}</code>.",
             "type": "generic",
             "read_only": false,
             "parameters": {

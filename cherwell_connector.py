@@ -265,6 +265,7 @@ class CherwellConnector(BaseConnector):
         return RetVal(phantom.APP_SUCCESS, recid)
 
     def _get_busobid(self, action_result, bus_obj):
+        self.debug_print("In _get_busobid")
         endpoint = CHERWELL_API_OBJ_SUMMARY.format(busobname=bus_obj)
         ret_val, response = self._make_rest_call(endpoint=endpoint, action_result=action_result)
         if phantom.is_fail(ret_val):
@@ -279,6 +280,8 @@ class CherwellConnector(BaseConnector):
 
     def _mogrify_fields(self, action_result, business_object):
         # Transform a list of json objects into a dictionary
+        self.debug_print("In mogrify fields")
+
         fields = business_object["fields"]
         fields_dict = {x.pop("name"): x for x in fields}
         business_object["fields"] = fields_dict
@@ -337,6 +340,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_get_user(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
         user_record_id = param["id"]
         endpoint = CHERWELL_GET_USER_RECORD_ID.format(recid=user_record_id)
@@ -349,6 +354,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully retrieved user information")
 
     def _handle_list_users(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         params = {"loginidfilter": "both"}
@@ -357,6 +364,7 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
+        self.debug_print("Fetched {} users".format(len(response["users"])))
         # Format each user in the list
         for user in response["users"]:
             self._mogrify_fields(action_result, user)
@@ -365,6 +373,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully retrieved the list of users")
 
     def _handle_get_attachments(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
         public_id = param["id"]
         save_attachmets = param.get("save_to_vault", False)
@@ -386,6 +396,7 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
+        self.debug_print("Fetched {} attachments".format(response["attachments"]))
         for result in response["attachments"]:
             action_result.add_data(result)
 
@@ -397,6 +408,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Retrieved Attachments")
 
     def _handle_update_ticket(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
         public_id = param["id"]
         vault_id = param.get("file")
@@ -435,6 +448,7 @@ class CherwellConnector(BaseConnector):
             action_result.add_data(response)
 
         if vault_id:
+            self.debug_print("Fetching from vault")
             try:
                 file_info = Vault.get_file_info(vault_id=vault_id)[0]
             except Exception:
@@ -459,6 +473,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully updated incident")
 
     def _handle_create_ticket(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
         description = param["description"]
         priority = param["priority"]
@@ -518,6 +534,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Created Ticket")
 
     def _handle_get_ticket(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
         public_id = param["id"]
         bus_obj = param.get("object", "Incident")
@@ -538,6 +556,8 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Listed Tickets")
 
     def _handle_list_tickets(self, param):
+        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+
         action_result = self.add_action_result(ActionResult(dict(param)))
         bus_obj = param.get("object", "Incident")
         search_text = param.get("search_text", "")
