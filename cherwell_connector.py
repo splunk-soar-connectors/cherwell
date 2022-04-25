@@ -17,6 +17,7 @@
 # Phantom App imports
 import json
 
+import encryption_helper
 import phantom.app as phantom
 import requests
 from bs4 import BeautifulSoup
@@ -236,6 +237,34 @@ class CherwellConnector(BaseConnector):
             return ret_val, ret_data
 
         return _handle_authentication
+
+    def _encrypt_state(self, state):
+        if 'access_token' in state and 'refresh_token' in state:
+            access_token = state['access_token']
+            refresh_token = state['refresh_token']
+            state['access_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
+                json.dumps(access_token),
+                self._client_id
+            )
+            state['refresh_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
+                json.dumps(refresh_token),
+                self._client_id
+            )
+        return state
+
+    def _decrypt_state(self, state):
+        if 'access_token' in state and 'refresh_token' in state:
+            access_token = encryption_helper.decrypt(  # pylint: disable=E1101
+                state['access_token'],
+                self._client_id
+            )
+            refresh_token = encryption_helper.decrypt(  # pylint: disable=E1101
+                state['refresh_token'],
+                self._client_id
+            )
+            state['access_token'] = access_token
+            state['refresh_token'] = refresh_token
+        return state
 
     def _get_customer_recid(self, action_result, full_name):
         ret_val, busobid_cid = self._get_busobid(action_result, "CustomerInternal")
@@ -624,7 +653,7 @@ class CherwellConnector(BaseConnector):
         self._username = config["username"]
         self._password = config["password"]
         self._client_id = config["client_id"]
-        self._state = self.load_state()
+        self._state = self._decrypt_state(self.load_state())
 
         self._make_rest_call = self._make_rest_call_wrapper(self._make_rest_call)
         self._make_rest_call_file = self._make_rest_call_wrapper(self._make_rest_call_file)
@@ -633,7 +662,7 @@ class CherwellConnector(BaseConnector):
     def finalize(self):
 
         # Save the state, this data is saved accross actions and app upgrades
-        self.save_state(self._state)
+        self.save_state(self._encrypt_state(self._state))
         return phantom.APP_SUCCESS
 
 
