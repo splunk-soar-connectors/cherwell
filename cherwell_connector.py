@@ -266,7 +266,7 @@ class CherwellConnector(BaseConnector):
             state['refresh_token'] = refresh_token
         return state
 
-    def _get_customer_recid(self, action_result, full_name):
+    def _get_customer_recid(self, action_result, email_id):
         ret_val, busobid_cid = self._get_busobid(action_result, "CustomerInternal")
         if phantom.is_fail(ret_val):
             return RetVal(ret_val)
@@ -276,20 +276,20 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(response):
             return RetVal(ret_val)
 
-        field_id = self._get_field_id(response["fieldDefinitions"], "Full name")
-
-        search_request = {"busObId": busobid_cid, "filters": [{"fieldId": field_id, "operator": "eq", "value": full_name}]}
+        field_id = self._get_field_id(response["fieldDefinitions"], "Email")
+        search_request = {"busObId": busobid_cid, "filters": [{"fieldId": field_id, "operator": "eq", "value": email_id}]}
 
         ret_val, response = self._make_rest_call(
             endpoint=CHERWELL_API_GET_SEARCH_RESULT, action_result=action_result, data=search_request, method="post"
         )
+
         if phantom.is_fail(ret_val):
             return RetVal(ret_val)
 
         try:
             recid = response["businessObjects"][0]["busObRecId"]
         except IndexError:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to find user by that name"))
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to find user by that email"))
 
         return RetVal(phantom.APP_SUCCESS, recid)
 
@@ -507,14 +507,9 @@ class CherwellConnector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
         description = param["description"]
         priority = param["priority"]
-        public_id = param.get("user_public_id")
-        record_id = param.get("user_record_id")
+        email_id = param["user_email_id"]
 
-        # Full Name is same customer public id
-        if not record_id and public_id:
-            ret_val, record_id = self._get_customer_recid(action_result, public_id)
-        elif not record_id and not public_id:
-            return action_result.set_status(phantom.APP_ERROR, "Must specify either a Record ID or Pubic ID")
+        ret_val, record_id = self._get_customer_recid(action_result, email_id)
 
         other = param.get("other")
         if other:
@@ -644,6 +639,13 @@ class CherwellConnector(BaseConnector):
 
         return ret_val
 
+    def _reset_state_file(self):
+        """
+        This method resets the state file.
+        """
+        self.debug_print("Resetting the state file with the default format")
+        self._state = {"app_version": self.get_app_json().get('app_version')}
+
     def initialize(self):
 
         # Load the state in initialize, use it to store data
@@ -653,7 +655,12 @@ class CherwellConnector(BaseConnector):
         self._username = config["username"]
         self._password = config["password"]
         self._client_id = config["client_id"]
-        self._state = self._decrypt_state(self.load_state())
+
+        self._state = self.load_state()
+        if not isinstance(self._state, dict):
+            self._reset_state_file()
+
+        self._state = self._decrypt_state(self._state)
 
         self._make_rest_call = self._make_rest_call_wrapper(self._make_rest_call)
         self._make_rest_call_file = self._make_rest_call_wrapper(self._make_rest_call_file)
@@ -661,7 +668,7 @@ class CherwellConnector(BaseConnector):
 
     def finalize(self):
 
-        # Save the state, this data is saved accross actions and app upgrades
+        # Save the state, this data is saved across actions and app upgrades
         self.save_state(self._encrypt_state(self._state))
         return phantom.APP_SUCCESS
 
