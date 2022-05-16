@@ -21,9 +21,9 @@ import encryption_helper
 import phantom.app as phantom
 import requests
 from bs4 import BeautifulSoup
+from phantom import vault as Vault
 from phantom.action_result import ActionResult
 from phantom.base_connector import BaseConnector
-from phantom.vault import Vault
 from requests.structures import CaseInsensitiveDict
 
 # Usage of the consts file is recommended
@@ -337,7 +337,7 @@ class CherwellConnector(BaseConnector):
             endpoint = CHERWELL_GET_ATTACHMENT.format(
                 attachmentid=attachment["attachmentId"], busobid=attachment["busObId"], busobrecid=attachment["busObRecId"]
             )
-            ret_val, response = self._make_rest_call_file(endpoint=endpoint, action_result=action_result, get_file=True)
+            ret_val, response = self._make_rest_call_file(endpoint=endpoint, action_result=action_result)
             if phantom.is_fail(ret_val):
                 return ret_val
 
@@ -350,12 +350,11 @@ class CherwellConnector(BaseConnector):
             with open(file_path, "wb+") as fp:
                 fp.write(response)
                 fp.close()
-                resp = Vault.add_attachment(file_path, self.get_container_id())
-
-            if not resp["succeeded"]:
+                success, message, resp = Vault.vault_add(file_location=file_path, container=self.get_container_id())
+            if not success:
                 return action_result.set_status(phantom.APP_ERROR, "Unable to add file to vault: {}".format(str(resp["message"])))
 
-            attachment.update({"vault_id": resp["vault_id"]})
+            attachment.update({"vault_id": resp})
         return phantom.APP_SUCCESS
 
     def _handle_test_connectivity(self, param):
@@ -479,7 +478,10 @@ class CherwellConnector(BaseConnector):
         if vault_id:
             self.debug_print("Fetching from vault")
             try:
-                file_info = Vault.get_file_info(vault_id=vault_id)[0]
+                success, message, file_info = Vault.vault_info(vault_id=vault_id)
+                file_info = file_info[0]
+                if not success:
+                    return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
             except Exception:
                 return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
             try:
