@@ -227,7 +227,7 @@ class CherwellConnector(BaseConnector):
                 ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, refresh_token=True)
                 if phantom.is_fail(ret_val_oauth):
                     return ret_val_oauth, token_response
-            ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
+                ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
 
             if phantom.is_fail(ret_val) and ret_data == 401:
                 self.debug_print("Refresh token is also not working, generating new token")
@@ -235,7 +235,7 @@ class CherwellConnector(BaseConnector):
                 if phantom.is_fail(ret_val_oauth):
                     return ret_val_oauth, token_response
 
-            ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
+                ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
 
             return ret_val, ret_data
 
@@ -265,8 +265,8 @@ class CherwellConnector(BaseConnector):
                 state['refresh_token'],
                 self._client_id
             )
-            state['access_token'] = access_token
-            state['refresh_token'] = refresh_token
+            state['access_token'] = json.loads(access_token)
+            state['refresh_token'] = json.loads(refresh_token)
         return state
 
     def _get_customer_recid(self, action_result, email_id):
@@ -492,7 +492,7 @@ class CherwellConnector(BaseConnector):
             except Exception as e:
                 return action_result.set_status(phantom.APP_ERROR, "Unable to read file", e)
             endpoint = CHERWELL_API_UPLOAD_ATTACHMENT.format(
-                filename=file_info["name"], busobid=busobid, publicid=public_id, offset="0", totalsize=file_info["size"]
+                filename=requests.utils.quote(file_info["name"]), busobid=busobid, publicid=public_id, offset="0", totalsize=file_info["size"]
             )
             headers = {"Content-Type": "application/octet-stream"}
             ret_val, response = self._make_rest_call(

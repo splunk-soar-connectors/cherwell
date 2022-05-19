@@ -17,7 +17,7 @@
     "min_phantom_version": "5.2.0",
     "app_wizard_version": "1.0.0",
     "python_version": "3",
-    "fips_compliant": true,
+    "fips_compliant" : true,
     "configuration": {
         "api_url": {
             "description": "API URL",
