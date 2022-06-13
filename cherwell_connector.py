@@ -253,9 +253,12 @@ class CherwellConnector(BaseConnector):
                 json.dumps(refresh_token),
                 self._client_id
             )
+            state[IS_STATE_ENCRYPTED] = True
         return state
 
     def _decrypt_state(self, state):
+        if state.get(IS_STATE_ENCRYPTED, False):
+            return state
         if 'access_token' in state and 'refresh_token' in state:
             access_token = encryption_helper.decrypt(  # pylint: disable=E1101
                 state['access_token'],
@@ -485,8 +488,8 @@ class CherwellConnector(BaseConnector):
                 file_info = file_info[0]
                 if not success:
                     return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
-            except Exception:
-                return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
+            except Exception as ex:
+                return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info: {}".format(ex))
             try:
                 file_bytes = open(file_info["path"], "rb").read()
             except Exception as e:
@@ -665,7 +668,10 @@ class CherwellConnector(BaseConnector):
         if not isinstance(self._state, dict):
             self._reset_state_file()
 
-        self._state = self._decrypt_state(self._state)
+        try:
+            self._state = self._decrypt_state(self._state)
+        except Exception as ex:
+            self.debug_print("Exception occurred: {}".format(ex))
 
         self._make_rest_call = self._make_rest_call_wrapper(self._make_rest_call)
         self._make_rest_call_file = self._make_rest_call_wrapper(self._make_rest_call_file)
