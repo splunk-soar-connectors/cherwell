@@ -158,7 +158,7 @@ class CherwellConnector(BaseConnector):
 
         return _handle_authentication
 
-    @_make_rest_call_wrapper()
+    @_make_rest_call_wrapper
     def _make_rest_call(self, endpoint, action_result, headers=None, params=None, data=None, form_data=None, method="get"):
         resp_json = None
 
@@ -718,7 +718,7 @@ class CherwellConnector(BaseConnector):
         self._username = config["username"]
         self._password = config["password"]
         self._client_id = config["client_id"]
-        self._verify = config["verify"]
+        self._verify = config["verify_server_cert"]
         self._timeout = config["timeout"]
 
         self._state = self.load_state()
