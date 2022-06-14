@@ -47,6 +47,8 @@ class CherwellConnector(BaseConnector):
         self._client_id = None
         self._token = None
         self.asset_id = self.get_asset_id()
+        self._verify = None
+        self._timeout = None
 
     def _process_empty_reponse(self, response, action_result):
 
@@ -177,7 +179,7 @@ class CherwellConnector(BaseConnector):
         url = self._base_url + endpoint
 
         try:
-            r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=30)
+            r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=self._timeout, verify=self._verify)
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
             return RetVal(
@@ -210,7 +212,7 @@ class CherwellConnector(BaseConnector):
 
         url = self._base_url + endpoint
         try:
-            r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=30)
+            r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=self._timeout, verify=self._verify)
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(error_message)))
@@ -236,7 +238,8 @@ class CherwellConnector(BaseConnector):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         try:
-            response = requests.request("POST", "{}{}".format(self._base_url, CHERWELL_API_TOKEN), data=data, headers=headers, timeout=30)
+            endpoint = "{}{}".format(self._base_url, CHERWELL_API_TOKEN)
+            response = requests.post(endpoint, data=data, headers=headers, timeout=self._timeout, verify=self._verify)
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
             self.debug_print("Error to make request call Error:{0}".format(error_message))
@@ -715,6 +718,8 @@ class CherwellConnector(BaseConnector):
         self._username = config["username"]
         self._password = config["password"]
         self._client_id = config["client_id"]
+        self._verify = config["verify"]
+        self._timeout = config["timeout"]
 
         self._state = self.load_state()
         if not isinstance(self._state, dict):
