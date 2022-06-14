@@ -29,5 +29,5 @@ CHERWELL_GET_ATTACHMENT = "/CherwellAPI/api/V1/getbusinessobjectattachment/attac
 CHERWELL_GET_USER_RECORD_ID = "/CherwellAPI/api/V1/getuserbyrecid/recid/{recid}"
 CHERWELL_GET_USER_PUBLIC_ID = "/CherwellAPI/api/V1/getuserbypublicid/publicid/{publicid}"
 CHERWELL_LIST_USERS = "/CherwellAPI/api/V1/getlistofusers"
-
+ERR_MSG_UNAVAILABLE = "Error message unavailable. Please check the asset configuration and|or action parameters."
 IS_STATE_ENCRYPTED = 'encryption'

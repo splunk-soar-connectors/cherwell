@@ -46,6 +46,7 @@ class CherwellConnector(BaseConnector):
         self._password = None
         self._client_id = None
         self._token = None
+        self.asset_id = self.get_asset_id()
 
     def _process_empty_reponse(self, response, action_result):
 
@@ -68,7 +69,7 @@ class CherwellConnector(BaseConnector):
             split_lines = error_text.split("\n")
             split_lines = [x.strip() for x in split_lines if x.strip()]
             error_text = "\n".join(split_lines)
-        except:
+        except Exception:
             error_text = "Cannot parse error details"
 
         message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
@@ -83,7 +84,8 @@ class CherwellConnector(BaseConnector):
         try:
             resp_json = r.json()
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".format(str(e))), None)
+            error_message = self._get_error_message_from_exception(e)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".format(error_message)), None)
 
         # Please specify the status codes here
         if 200 <= r.status_code < 399:
@@ -126,6 +128,35 @@ class CherwellConnector(BaseConnector):
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
+    def _make_rest_call_wrapper(func):
+        # Handle authentication before _make_rest_call
+        def _handle_authentication(self, action_result, *args, **kwargs):
+            self.debug_print("inside wrapper using {}".format(func))
+            ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result)
+            if phantom.is_fail(ret_val_oauth):
+                return ret_val_oauth, token_response
+            ret_val, ret_data = func(self, action_result=action_result, *args, **kwargs)
+
+            if phantom.is_fail(ret_val) and ret_data == 401:
+                self.debug_print("Old token is not working")
+                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, refresh_token=True)
+                if phantom.is_fail(ret_val_oauth):
+                    return ret_val_oauth, token_response
+                ret_val, ret_data = func(self, action_result=action_result, *args, **kwargs)
+
+            if phantom.is_fail(ret_val) and ret_data == 401:
+                self.debug_print("Refresh token is also not working, generating new token")
+                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, force_new_token=True)
+                if phantom.is_fail(ret_val_oauth):
+                    return ret_val_oauth, token_response
+
+                ret_val, ret_data = func(self, action_result=action_result, *args, **kwargs)
+
+            return ret_val, ret_data
+
+        return _handle_authentication
+
+    @_make_rest_call_wrapper()
     def _make_rest_call(self, endpoint, action_result, headers=None, params=None, data=None, form_data=None, method="get"):
         resp_json = None
 
@@ -146,15 +177,20 @@ class CherwellConnector(BaseConnector):
         url = self._base_url + endpoint
 
         try:
-            r = request_func(url, json=data, data=form_data, headers=headers, params=params)
+            r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=30)
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
+            error_message = self._get_error_message_from_exception(e)
+            return RetVal(
+                action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(error_message)),
+                resp_json
+            )
 
         if r.status_code == 401:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching access token: {}".format(r.text)), r.status_code)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Authorization Error: {}".format(r.text)), r.status_code)
 
         return self._process_response(r, action_result)
 
+    @_make_rest_call_wrapper
     def _make_rest_call_file(self, endpoint, action_result, headers=None, params=None, data=None, form_data=None, method="get"):
         # This is used for making a rest call which will return a file (whihc would just be a string of bytes)
         # No need for as much validation of the output here
@@ -174,9 +210,10 @@ class CherwellConnector(BaseConnector):
 
         url = self._base_url + endpoint
         try:
-            r = request_func(url, json=data, data=form_data, headers=headers, params=params)
+            r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=30)
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))))
+            error_message = self._get_error_message_from_exception(e)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(error_message)))
 
         if r.status_code == 401:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching access token: {}".format(r.text)), r.status_code)
@@ -198,7 +235,11 @@ class CherwellConnector(BaseConnector):
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-        response = requests.request("POST", self._base_url + CHERWELL_API_TOKEN, data=data, headers=headers)  # nosemgrep
+        try:
+            response = requests.request("POST", "{}{}".format(self._base_url, CHERWELL_API_TOKEN), data=data, headers=headers, timeout=30)
+        except Exception as e:
+            error_message = self._get_error_message_from_exception(e)
+            self.debug_print("Error to make request call Error:{0}".format(error_message))
 
         if response.status_code != 200:
             if refresh_token:
@@ -214,62 +255,43 @@ class CherwellConnector(BaseConnector):
 
         return RetVal(action_result.set_status(phantom.APP_SUCCESS, "Successfully fetched token"), self._state.get("access_token"))
 
-    def _make_rest_call_wrapper(self, func):
-        # Handle authentication before _make_rest_call
-        def _handle_authentication(action_result, *args, **kwargs):
-            ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result)
-            if phantom.is_fail(ret_val_oauth):
-                return ret_val_oauth, token_response
-            ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
-
-            if phantom.is_fail(ret_val) and ret_data == 401:
-                self.debug_print("Old token is not working")
-                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, refresh_token=True)
-                if phantom.is_fail(ret_val_oauth):
-                    return ret_val_oauth, token_response
-                ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
-
-            if phantom.is_fail(ret_val) and ret_data == 401:
-                self.debug_print("Refresh token is also not working, generating new token")
-                ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result, force_new_token=True)
-                if phantom.is_fail(ret_val_oauth):
-                    return ret_val_oauth, token_response
-
-                ret_val, ret_data = func(action_result=action_result, *args, **kwargs)
-
-            return ret_val, ret_data
-
-        return _handle_authentication
-
     def _encrypt_state(self, state):
         if 'access_token' in state and 'refresh_token' in state:
             access_token = state['access_token']
             refresh_token = state['refresh_token']
-            state['access_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
-                json.dumps(access_token),
-                self._client_id
-            )
-            state['refresh_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
-                json.dumps(refresh_token),
-                self._client_id
-            )
-            state[IS_STATE_ENCRYPTED] = True
+            try:
+                state['access_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
+                    json.dumps(access_token),
+                    self.asset_id
+                )
+                state['refresh_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
+                    json.dumps(refresh_token),
+                    self.asset_id
+                )
+                state[IS_STATE_ENCRYPTED] = True
+            except Exception as e:
+                error_message = self._get_error_message_from_exception(e)
+                self.debug_print("Unable to make encryption Error:{}".format(error_message))
         return state
 
     def _decrypt_state(self, state):
         if state.get(IS_STATE_ENCRYPTED, False):
             return state
         if 'access_token' in state and 'refresh_token' in state:
-            access_token = encryption_helper.decrypt(  # pylint: disable=E1101
-                state['access_token'],
-                self._client_id
-            )
-            refresh_token = encryption_helper.decrypt(  # pylint: disable=E1101
-                state['refresh_token'],
-                self._client_id
-            )
-            state['access_token'] = json.loads(access_token)
-            state['refresh_token'] = json.loads(refresh_token)
+            try:
+                access_token = encryption_helper.decrypt(  # pylint: disable=E1101
+                    state['access_token'],
+                    self.asset_id
+                )
+                refresh_token = encryption_helper.decrypt(  # pylint: disable=E1101
+                    state['refresh_token'],
+                    self.asset_id
+                )
+                state['access_token'] = json.loads(access_token)
+                state['refresh_token'] = json.loads(refresh_token)
+            except Exception as e:
+                error_message = self._get_error_message_from_exception(e)
+                self.debug_print("Unable to make decryption. Error:{0}".format(error_message))
         return state
 
     def _get_customer_recid(self, action_result, email_id):
@@ -294,10 +316,36 @@ class CherwellConnector(BaseConnector):
 
         try:
             recid = response["businessObjects"][0]["busObRecId"]
-        except IndexError:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to find user by that email"))
+        except IndexError as ex:
+            error_message = self._get_error_message_from_exception(ex)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to find user by that email. Error: {0}".format(error_message)))
 
         return RetVal(phantom.APP_SUCCESS, recid)
+
+    def _get_error_message_from_exception(self, e):
+        """ This function is used to get appropriate error message from the exception.
+        :param e: Exception object
+        :return: error message
+        """
+        error_code = None
+        error_msg = ERR_MSG_UNAVAILABLE
+
+        try:
+            if hasattr(e, "args"):
+                if len(e.args) > 1:
+                    error_code = e.args[0]
+                    error_msg = e.args[1]
+                elif len(e.args) == 1:
+                    error_msg = e.args[0]
+        except Exception:
+            pass
+
+        if not error_code:
+            error_text = "Error Message: {}".format(error_msg)
+        else:
+            error_text = "Error Code: {}. Error Message: {}".format(error_code, error_msg)
+
+        return error_text
 
     def _get_busobid(self, action_result, bus_obj):
         self.debug_print("In _get_busobid")
@@ -308,7 +356,7 @@ class CherwellConnector(BaseConnector):
 
         try:
             busobid = response[0]["busObId"]
-        except:
+        except Exception:
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to retrieve Business Object ID"))
 
         return RetVal(phantom.APP_SUCCESS, busobid)
@@ -455,7 +503,8 @@ class CherwellConnector(BaseConnector):
             try:
                 other_dict = json.loads(other)
             except Exception as e:
-                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", e)
+                error_message = self._get_error_message_from_exception(e)
+                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", error_message)
             field_value_map = CaseInsensitiveDict()
             field_value_map.update(other_dict)
         else:
@@ -489,11 +538,13 @@ class CherwellConnector(BaseConnector):
                 if not success:
                     return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
             except Exception as ex:
-                return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info: {}".format(ex))
+                error_message = self._get_error_message_from_exception(ex)
+                return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info: {}".format(error_message))
             try:
                 file_bytes = open(file_info["path"], "rb").read()
             except Exception as e:
-                return action_result.set_status(phantom.APP_ERROR, "Unable to read file", e)
+                error_message = self._get_error_message_from_exception(e)
+                return action_result.set_status(phantom.APP_ERROR, "Unable to read file", error_message)
             endpoint = CHERWELL_API_UPLOAD_ATTACHMENT.format(
                 filename=requests.utils.quote(file_info["name"]), busobid=busobid, publicid=public_id, offset="0", totalsize=file_info["size"]
             )
@@ -524,7 +575,8 @@ class CherwellConnector(BaseConnector):
             try:
                 other_dict = json.loads(other)
             except Exception as e:
-                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", e)
+                error_message = self._get_error_message_from_exception(e)
+                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", error_message)
         else:
             other_dict = {}
 
@@ -671,10 +723,9 @@ class CherwellConnector(BaseConnector):
         try:
             self._state = self._decrypt_state(self._state)
         except Exception as ex:
-            self.debug_print("Exception occurred: {}".format(ex))
+            error_message = self._get_error_message_from_exception(ex)
+            self.debug_print("Exception occurred while decrypting state: {}".format(error_message))
 
-        self._make_rest_call = self._make_rest_call_wrapper(self._make_rest_call)
-        self._make_rest_call_file = self._make_rest_call_wrapper(self._make_rest_call_file)
         return phantom.APP_SUCCESS
 
     def finalize(self):
@@ -705,6 +756,7 @@ if __name__ == "__main__":
 
     username = args.username
     password = args.password
+    verify = args.verify
 
     if username is not None and password is None:
 
@@ -717,7 +769,7 @@ if __name__ == "__main__":
         login_url = BaseConnector._get_phantom_base_url() + "login"
         try:
             print("Accessing the Login page")
-            r = requests.get(login_url, verify=False)   # nosemgrep
+            r = requests.get(login_url, verify=verify, timeout=30)
             csrftoken = r.cookies["csrftoken"]
 
             data = dict()
@@ -730,7 +782,7 @@ if __name__ == "__main__":
             headers["Referer"] = login_url
 
             print("Logging into Platform to get the session id")
-            r2 = requests.post(login_url, verify=False, data=data, headers=headers)  # nosemgrep
+            r2 = requests.post(login_url, verify=verify, data=data, headers=headers, timeout=30)
             session_id = r2.cookies["sessionid"]
         except Exception as e:
             print("Unable to get session id from the platfrom. Error: " + str(e))

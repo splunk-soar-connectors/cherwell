@@ -8,7 +8,7 @@
     "logo_dark": "logo_cherwell_dark.svg",
     "product_name": "Cherwell",
     "product_version_regex": ".*",
-    "publisher": "Phantom",
+    "publisher": "Splunk",
     "license": "Copyright (c) 2017-2022 Splunk Inc.",
     "app_version": "2.0.0",
     "utctime_updated": "2022-01-07T19:59:59.000000Z",
@@ -18,6 +18,9 @@
     "app_wizard_version": "1.0.0",
     "python_version": "3",
     "fips_compliant" : true,
+    "latest_tested_version": [
+        "10.4.0, 14 June 2022"
+    ],
     "configuration": {
         "api_url": {
             "description": "API URL",
