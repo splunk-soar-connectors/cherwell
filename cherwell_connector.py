@@ -274,7 +274,7 @@ class CherwellConnector(BaseConnector):
                 state[IS_STATE_ENCRYPTED] = True
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
-                self.debug_print("Unable to make encryption Error:{}".format(error_message))
+                self.debug_print("Error occurred while encrypting the token: {}".format(error_message))
         return state
 
     def _decrypt_state(self, state):
@@ -294,7 +294,7 @@ class CherwellConnector(BaseConnector):
                 state['refresh_token'] = json.loads(refresh_token)
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
-                self.debug_print("Unable to make decryption. Error:{0}".format(error_message))
+                self.debug_print("Error occurred while decrypting the token: {0}".format(error_message))
         return state
 
     def _get_customer_recid(self, action_result, email_id):
