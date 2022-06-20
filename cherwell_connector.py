@@ -505,11 +505,11 @@ class CherwellConnector(BaseConnector):
         if other:
             try:
                 other_dict = json.loads(other)
+                field_value_map = CaseInsensitiveDict()
+                field_value_map.update(other_dict)
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
-                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", error_message)
-            field_value_map = CaseInsensitiveDict()
-            field_value_map.update(other_dict)
+                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object")
         else:
             field_value_map = None
 
@@ -573,13 +573,16 @@ class CherwellConnector(BaseConnector):
 
         ret_val, record_id = self._get_customer_recid(action_result, email_id)
 
+        field_value_map = {}
         other = param.get("other")
         if other:
             try:
                 other_dict = json.loads(other)
+                field_value_map = CaseInsensitiveDict()
+                field_value_map.update(other_dict)
             except Exception as e:
-                error_message = self._get_error_message_from_exception(e)
-                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object", error_message)
+                self.debug_print("Error loading json: {}".format(e))
+                return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object")
         else:
             other_dict = {}
 
@@ -598,11 +601,9 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
-        field_value_map = CaseInsensitiveDict()
         field_value_map["description"] = description
         field_value_map["priority"] = priority
         field_value_map["customerrecid"] = record_id
-        field_value_map.update(other_dict)
 
         fields = response["fields"]
         self._set_field_values(fields, field_value_map)

@@ -1587,6 +1587,9 @@
                     "example_values": [
                         "9354650fbf63b8f69623cd4b179bc739dabe2716c8"
                     ],
+                    "contains": [
+                        "cherwell customer rec id"
+                    ],
                     "column_name": "Record ID",
                     "column_order": 1
                 },
@@ -3173,9 +3176,6 @@
                     "example_values": [
                         "Andrew Simms"
                     ],
-                    "contains": [
-                        "cherwell customer public id"
-                    ],
                     "column_name": "Public ID",
                     "column_order": 0
                 },
@@ -3267,7 +3267,7 @@
                     "required": true,
                     "primary": true,
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "order": 0
                 },
@@ -3291,7 +3291,7 @@
                     "data_path": "action_result.parameter.id",
                     "data_type": "string",
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "example_values": [
                         "102328"
@@ -3468,7 +3468,7 @@
                     "required": true,
                     "primary": true,
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "order": 0
                 },
@@ -3510,11 +3510,13 @@
                     "data_path": "action_result.parameter.id",
                     "data_type": "string",
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "example_values": [
                         "102328"
-                    ]
+                    ],
+                    "column_name": "Incident ID",
+                    "column_order": 0
                 },
                 {
                     "data_path": "action_result.parameter.other",
@@ -3571,7 +3573,7 @@
                         "Successfully updated incident"
                     ],
                     "column_name": "Message",
-                    "column_order": 0
+                    "column_order": 1
                 },
                 {
                     "data_path": "summary.total_objects",
@@ -3708,7 +3710,7 @@
                     "data_path": "action_result.summary.id",
                     "data_type": "string",
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "column_name": "New Ticket ID",
                     "column_order": 0
@@ -3753,7 +3755,7 @@
                     "required": true,
                     "primary": true,
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "order": 0
                 }
@@ -3773,7 +3775,7 @@
                     "data_path": "action_result.parameter.id",
                     "data_type": "string",
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "column_name": "ID",
                     "column_order": 0,
@@ -12549,7 +12551,7 @@
                         "102332"
                     ],
                     "contains": [
-                        "cherwell public id"
+                        "cherwell incident id"
                     ],
                     "column_name": "ID",
                     "column_order": 2
