@@ -578,8 +578,6 @@ class CherwellConnector(BaseConnector):
         if other:
             try:
                 other_dict = json.loads(other)
-                field_value_map = CaseInsensitiveDict()
-                field_value_map.update(other_dict)
             except Exception as e:
                 self.debug_print("Error loading json: {}".format(e))
                 return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object")
@@ -601,9 +599,11 @@ class CherwellConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return ret_val
 
+        field_value_map = CaseInsensitiveDict()
         field_value_map["description"] = description
         field_value_map["priority"] = priority
         field_value_map["customerrecid"] = record_id
+        field_value_map.update(other_dict if isinstance(other_dict, dict) else {})
 
         fields = response["fields"]
         self._set_field_values(fields, field_value_map)
