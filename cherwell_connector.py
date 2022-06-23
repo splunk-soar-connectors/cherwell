@@ -133,7 +133,6 @@ class CherwellConnector(BaseConnector):
     def _make_rest_call_wrapper(func):
         # Handle authentication before _make_rest_call
         def _handle_authentication(self, action_result, *args, **kwargs):
-            self.debug_print("inside wrapper using {}".format(func))
             ret_val_oauth, token_response = self._get_oauth_token(action_result=action_result)
             if phantom.is_fail(ret_val_oauth):
                 return ret_val_oauth, token_response
