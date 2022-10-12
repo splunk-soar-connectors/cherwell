@@ -59,7 +59,7 @@ class CherwellConnector(BaseConnector):
 
     def _process_html_response(self, response, action_result):
 
-        # An html response, treat it like an error
+        # A html response, treat it like an error
         status_code = response.status_code
 
         try:
