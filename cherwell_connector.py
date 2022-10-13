@@ -50,7 +50,7 @@ class CherwellConnector(BaseConnector):
         self._verify = None
         self._timeout = None
 
-    def _process_empty_reponse(self, response, action_result):
+    def _process_empty_response(self, response, action_result):
 
         if response.status_code == 200:
             return RetVal(phantom.APP_SUCCESS, {})
@@ -112,7 +112,7 @@ class CherwellConnector(BaseConnector):
         if "json" in r.headers.get("Content-Type", ""):
             return self._process_json_response(r, action_result)
 
-        # Process an HTML resonse, Do this no matter what the api talks.
+        # Process an HTML response, Do this no matter what the api talks.
         # There is a high chance of a PROXY in between phantom and the rest of
         # world, in case of errors, PROXY's return HTML, this function parses
         # the error and adds it to the action_result.
@@ -121,7 +121,7 @@ class CherwellConnector(BaseConnector):
 
         # it's not content-type that is to be parsed, handle an empty response
         if not r.text:
-            return self._process_empty_reponse(r, action_result)
+            return self._process_empty_response(r, action_result)
 
         # everything else is actually an error at this point
         message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
@@ -193,7 +193,7 @@ class CherwellConnector(BaseConnector):
 
     @_make_rest_call_wrapper
     def _make_rest_call_file(self, endpoint, action_result, headers=None, params=None, data=None, form_data=None, method="get"):
-        # This is used for making a rest call which will return a file (whihc would just be a string of bytes)
+        # This is used for making a rest call which will return a file (which would just be a string of bytes)
         # No need for as much validation of the output here
 
         if not headers:
@@ -790,7 +790,7 @@ if __name__ == "__main__":
             r2 = requests.post(login_url, verify=verify, data=data, headers=headers, timeout=30)
             session_id = r2.cookies["sessionid"]
         except Exception as e:
-            print("Unable to get session id from the platfrom. Error: " + str(e))
+            print("Unable to get session id from the platform. Error: " + str(e))
             exit(1)
 
     with open(args.input_test_json) as f:
