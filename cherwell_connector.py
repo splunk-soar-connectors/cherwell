@@ -1,6 +1,6 @@
 # File: cherwell_connector.py
 #
-# Copyright (c) 2017-2022 Splunk Inc.
+# Copyright (c) 2017-2025 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,9 +37,8 @@ class RetVal(tuple):
 
 class CherwellConnector(BaseConnector):
     def __init__(self):
-
         # Call the BaseConnectors init first
-        super(CherwellConnector, self).__init__()
+        super().__init__()
         self._state = None
         self._base_url = None
         self._username = None
@@ -51,14 +50,12 @@ class CherwellConnector(BaseConnector):
         self._timeout = None
 
     def _process_empty_response(self, response, action_result):
-
         if response.status_code == 200:
             return RetVal(phantom.APP_SUCCESS, {})
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, "Empty response and no information in the header"), None)
 
     def _process_html_response(self, response, action_result):
-
         # A html response, treat it like an error
         status_code = response.status_code
 
@@ -74,32 +71,30 @@ class CherwellConnector(BaseConnector):
         except Exception:
             error_text = "Cannot parse error details"
 
-        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, error_text)
+        message = f"Status Code: {status_code}. Data from server:\n{error_text}\n"
 
         message = message.replace("{", "{{").replace("}", "}}")
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
     def _process_json_response(self, r, action_result):
-
         # Try a json parse
         try:
             resp_json = r.json()
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".format(error_message)), None)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Unable to parse JSON response. Error: {error_message}"), None)
 
         # Please specify the status codes here
         if 200 <= r.status_code < 399:
             return RetVal(phantom.APP_SUCCESS, resp_json)
 
         # You should process the error returned in the json
-        message = "Error from server. Status Code: {0} Data from server: {1}".format(r.status_code, r.text.replace("{", "{{").replace("}", "}}"))
+        message = "Error from server. Status Code: {} Data from server: {}".format(r.status_code, r.text.replace("{", "{{").replace("}", "}}"))
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
     def _process_response(self, r, action_result):
-
         # store the r_text in debug data, it will get dumped in the logs if the action fails
         if hasattr(action_result, "add_debug_data"):
             action_result.add_debug_data({"r_status_code": r.status_code})
@@ -124,7 +119,7 @@ class CherwellConnector(BaseConnector):
             return self._process_empty_response(r, action_result)
 
         # everything else is actually an error at this point
-        message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
+        message = "Can't process response from server. Status Code: {} Data from server: {}".format(
             r.status_code, r.text.replace("{", "{{").replace("}", "}}")
         )
 
@@ -172,7 +167,7 @@ class CherwellConnector(BaseConnector):
         try:
             request_func = getattr(requests, method)
         except AttributeError:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Invalid method: {0}".format(method)), resp_json)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Invalid method: {method}"), resp_json)
 
         # Create a URL to connect to
         url = self._base_url + endpoint
@@ -181,13 +176,10 @@ class CherwellConnector(BaseConnector):
             r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=self._timeout, verify=self._verify)
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
-            return RetVal(
-                action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(error_message)),
-                resp_json
-            )
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Error Connecting to server. Details: {error_message}"), resp_json)
 
         if r.status_code == 401:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Authorization Error: {}".format(r.text)), r.status_code)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Authorization Error: {r.text}"), r.status_code)
 
         return self._process_response(r, action_result)
 
@@ -207,21 +199,21 @@ class CherwellConnector(BaseConnector):
         try:
             request_func = getattr(requests, method)
         except AttributeError:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Invalid method: {0}".format(method)))
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Invalid method: {method}"))
 
         url = self._base_url + endpoint
         try:
             r = request_func(url, json=data, data=form_data, headers=headers, params=params, timeout=self._timeout, verify=self._verify)
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(error_message)))
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Error Connecting to server. Details: {error_message}"))
 
         if r.status_code == 401:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error fetching access token: {}".format(r.text)), r.status_code)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Error fetching access token: {r.text}"), r.status_code)
 
         if r.status_code == 200:
             return RetVal(phantom.APP_SUCCESS, r.content)
-        return RetVal(action_result.set_status(phantom.APP_ERROR, "Error returned from server: {}".format(r.text)))
+        return RetVal(action_result.set_status(phantom.APP_ERROR, f"Error returned from server: {r.text}"))
 
     def _get_oauth_token(self, action_result, refresh_token=False, force_new_token=False):
         if not self._state.get("access_token") or force_new_token:
@@ -237,11 +229,11 @@ class CherwellConnector(BaseConnector):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         try:
-            endpoint = "{}{}".format(self._base_url, CHERWELL_API_TOKEN)
+            endpoint = f"{self._base_url}{CHERWELL_API_TOKEN}"
             response = requests.post(endpoint, data=data, headers=headers, timeout=self._timeout, verify=self._verify)
         except Exception as e:
             error_message = self._get_error_message_from_exception(e)
-            self.debug_print("Error to make request call Error:{0}".format(error_message))
+            self.debug_print(f"Error to make request call Error:{error_message}")
 
         if response.status_code != 200:
             if refresh_token:
@@ -258,42 +250,38 @@ class CherwellConnector(BaseConnector):
         return RetVal(action_result.set_status(phantom.APP_SUCCESS, "Successfully fetched token"), self._state.get("access_token"))
 
     def _encrypt_state(self, state):
-        if 'access_token' in state and 'refresh_token' in state:
-            access_token = state['access_token']
-            refresh_token = state['refresh_token']
+        if "access_token" in state and "refresh_token" in state:
+            access_token = state["access_token"]
+            refresh_token = state["refresh_token"]
             try:
-                state['access_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
-                    json.dumps(access_token),
-                    self.asset_id
+                state["access_token"] = encryption_helper.encrypt(  # pylint: disable=E1101
+                    json.dumps(access_token), self.asset_id
                 )
-                state['refresh_token'] = encryption_helper.encrypt(  # pylint: disable=E1101
-                    json.dumps(refresh_token),
-                    self.asset_id
+                state["refresh_token"] = encryption_helper.encrypt(  # pylint: disable=E1101
+                    json.dumps(refresh_token), self.asset_id
                 )
                 state[IS_STATE_ENCRYPTED] = True
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
-                self.debug_print("Error occurred while encrypting the token: {}".format(error_message))
+                self.debug_print(f"Error occurred while encrypting the token: {error_message}")
         return state
 
     def _decrypt_state(self, state):
         if state.get(IS_STATE_ENCRYPTED, False):
             return state
-        if 'access_token' in state and 'refresh_token' in state:
+        if "access_token" in state and "refresh_token" in state:
             try:
                 access_token = encryption_helper.decrypt(  # pylint: disable=E1101
-                    state['access_token'],
-                    self.asset_id
+                    state["access_token"], self.asset_id
                 )
                 refresh_token = encryption_helper.decrypt(  # pylint: disable=E1101
-                    state['refresh_token'],
-                    self.asset_id
+                    state["refresh_token"], self.asset_id
                 )
-                state['access_token'] = json.loads(access_token)
-                state['refresh_token'] = json.loads(refresh_token)
+                state["access_token"] = json.loads(access_token)
+                state["refresh_token"] = json.loads(refresh_token)
             except Exception as e:
                 error_message = self._get_error_message_from_exception(e)
-                self.debug_print("Error occurred while decrypting the token: {0}".format(error_message))
+                self.debug_print(f"Error occurred while decrypting the token: {error_message}")
         return state
 
     def _get_customer_recid(self, action_result, email_id):
@@ -320,12 +308,12 @@ class CherwellConnector(BaseConnector):
             recid = response["businessObjects"][0]["busObRecId"]
         except IndexError as ex:
             error_message = self._get_error_message_from_exception(ex)
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to find user by that email. Error: {0}".format(error_message)))
+            return RetVal(action_result.set_status(phantom.APP_ERROR, f"Unable to find user by that email. Error: {error_message}"))
 
         return RetVal(phantom.APP_SUCCESS, recid)
 
     def _get_error_message_from_exception(self, e):
-        """ This function is used to get appropriate error message from the exception.
+        """This function is used to get appropriate error message from the exception.
         :param e: Exception object
         :return: error message
         """
@@ -343,9 +331,9 @@ class CherwellConnector(BaseConnector):
             pass
 
         if not error_code:
-            error_text = "Error Message: {}".format(error_msg)
+            error_text = f"Error Message: {error_msg}"
         else:
-            error_text = "Error Code: {}. Error Message: {}".format(error_code, error_msg)
+            error_text = f"Error Code: {error_code}. Error Message: {error_msg}"
 
         return error_text
 
@@ -424,7 +412,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_get_user(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         user_record_id = param["id"]
@@ -438,7 +426,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully retrieved user information")
 
     def _handle_list_users(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
 
@@ -457,7 +445,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully retrieved the list of users")
 
     def _handle_get_attachments(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         public_id = param["id"]
@@ -492,7 +480,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Retrieved Attachments")
 
     def _handle_update_ticket(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         public_id = param["id"]
@@ -541,7 +529,7 @@ class CherwellConnector(BaseConnector):
                     return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info")
             except Exception as ex:
                 error_message = self._get_error_message_from_exception(ex)
-                return action_result.set_status(phantom.APP_ERROR, "Unable to retrieve vault file info: {}".format(error_message))
+                return action_result.set_status(phantom.APP_ERROR, f"Unable to retrieve vault file info: {error_message}")
             try:
                 file_bytes = open(file_info["path"], "rb").read()
             except Exception as e:
@@ -563,7 +551,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully updated incident")
 
     def _handle_create_ticket(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         description = param["description"]
@@ -578,7 +566,7 @@ class CherwellConnector(BaseConnector):
             try:
                 other_dict = json.loads(other)
             except Exception as e:
-                self.debug_print("Error loading json: {}".format(e))
+                self.debug_print(f"Error loading json: {e}")
                 return action_result.set_status(phantom.APP_ERROR, "Error loading JSON Object")
         else:
             other_dict = {}
@@ -621,7 +609,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Created Ticket")
 
     def _handle_get_ticket(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         public_id = param["id"]
@@ -643,7 +631,7 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Listed Tickets")
 
     def _handle_list_tickets(self, param):
-        self.debug_print("In action handler for: {}".format(self.get_action_identifier()))
+        self.debug_print(f"In action handler for: {self.get_action_identifier()}")
 
         action_result = self.add_action_result(ActionResult(dict(param)))
         bus_obj = param.get("object", "Incident")
@@ -668,7 +656,6 @@ class CherwellConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, "Successfully Listed Tickets")
 
     def handle_action(self, param):
-
         ret_val = phantom.APP_SUCCESS
 
         # Get the action that we are supposed to execute for this App Run
@@ -707,10 +694,9 @@ class CherwellConnector(BaseConnector):
         This method resets the state file.
         """
         self.debug_print("Resetting the state file with the default format")
-        self._state = {"app_version": self.get_app_json().get('app_version')}
+        self._state = {"app_version": self.get_app_json().get("app_version")}
 
     def initialize(self):
-
         # Load the state in initialize, use it to store data
         # that needs to be accessed across actions
         config = self.get_config()
@@ -729,19 +715,17 @@ class CherwellConnector(BaseConnector):
             self._state = self._decrypt_state(self._state)
         except Exception as ex:
             error_message = self._get_error_message_from_exception(ex)
-            self.debug_print("Exception occurred while decrypting state: {}".format(error_message))
+            self.debug_print(f"Exception occurred while decrypting state: {error_message}")
 
         return phantom.APP_SUCCESS
 
     def finalize(self):
-
         # Save the state, this data is saved across actions and app upgrades
         self.save_state(self._encrypt_state(self._state))
         return phantom.APP_SUCCESS
 
 
 if __name__ == "__main__":
-
     import argparse
     from sys import exit
 
@@ -754,7 +738,7 @@ if __name__ == "__main__":
     argparser.add_argument("input_test_json", help="Input Test JSON file")
     argparser.add_argument("-u", "--username", help="username", required=False)
     argparser.add_argument("-p", "--password", help="password", required=False)
-    argparser.add_argument('-v', '--verify', action='store_true', help='verify', required=False, default=False)
+    argparser.add_argument("-v", "--verify", action="store_true", help="verify", required=False, default=False)
 
     args = argparser.parse_args()
     session_id = None
@@ -764,7 +748,6 @@ if __name__ == "__main__":
     verify = args.verify
 
     if username is not None and password is None:
-
         # User specified a username but not a password, so ask
         import getpass
 
