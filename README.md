@@ -1,7 +1,7 @@
 # Cherwell
 
 Publisher: Splunk Community \
-Connector Version: 2.0.0 \
+Connector Version: 2.0.1 \
 Product Vendor: Cherwell Software \
 Product Name: Cherwell \
 Minimum Product Version: 5.2.0
