@@ -704,7 +704,7 @@ class CherwellConnector(BaseConnector):
         self._username = config["username"]
         self._password = config["password"]
         self._client_id = config["client_id"]
-        self._verify = config.get("verify_server_cert", False)
+        self._verify = config.get("verify_server_cert", True)
         self._timeout = config.get("timeout", 30)
 
         self._state = self.load_state()
