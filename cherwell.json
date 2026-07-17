@@ -9,7 +9,7 @@
     "product_name": "Cherwell",
     "product_version_regex": ".*",
     "publisher": "Splunk Community",
-    "license": "Copyright (c) 2017-2025 Splunk Inc.",
+    "license": "Copyright (c) 2017-2026 Splunk Inc.",
     "app_version": "2.0.1",
     "utctime_updated": "2025-04-28T18:20:54.194481Z",
     "package_name": "phantom_cherwell",

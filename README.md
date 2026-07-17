@@ -1,9 +1,9 @@
 # Cherwell
 
-Publisher: Splunk Community \
-Connector Version: 2.0.1 \
-Product Vendor: Cherwell Software \
-Product Name: Cherwell \
+Publisher: Splunk Community <br>
+Connector Version: 2.0.1 <br>
+Product Vendor: Cherwell Software <br>
+Product Name: Cherwell <br>
 Minimum Product Version: 5.2.0
 
 This app implements various ticketing actions on Cherwell
@@ -23,20 +23,20 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity using supplied configuration \
-[list users](#action-list-users) - Get a list of users \
-[get user](#action-get-user) - Get information about a user \
-[get attachments](#action-get-attachments) - List all of the attachments on a given incident \
-[update ticket](#action-update-ticket) - Update an incident \
-[create ticket](#action-create-ticket) - Create an incident \
-[get ticket](#action-get-ticket) - Get incident information \
+[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity using supplied configuration <br>
+[list users](#action-list-users) - Get a list of users <br>
+[get user](#action-get-user) - Get information about a user <br>
+[get attachments](#action-get-attachments) - List all of the attachments on a given incident <br>
+[update ticket](#action-update-ticket) - Update an incident <br>
+[create ticket](#action-create-ticket) - Create an incident <br>
+[get ticket](#action-get-ticket) - Get incident information <br>
 [list tickets](#action-list-tickets) - Get a list of incidents
 
 ## action: 'test connectivity'
 
 Validate the asset configuration for connectivity using supplied configuration
 
-Type: **test** \
+Type: **test** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -51,7 +51,7 @@ No Output
 
 Get a list of users
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -346,7 +346,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get information about a user
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -644,7 +644,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 List all of the attachments on a given incident
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -687,7 +687,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Update an incident
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in the incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{"Category": "Security Incident"}</code>.
@@ -723,7 +723,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Create an incident
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 Either a Public ID or a Record ID for a user must be used. When possible, try to use the Record ID over the Public ID. If both are present, the Public ID will be ignored.<br> The <b>other</b> field is used to change the <b>value</b> of some field in the incident. Any key which is returned in an incident's <b>fields</b> dictionary is okay to use. You will need to format this as a JSON object, so an example would be <code>{"Category": "Security Incident"}</code>.
@@ -761,7 +761,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get incident information
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -2226,7 +2226,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get a list of incidents
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -2257,7 +2257,7 @@ ______________________________________________________________________
 
 Auto-generated Splunk SOAR Connector documentation.
 
-Copyright 2025 Splunk Inc.
+Copyright 2026 Splunk Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
