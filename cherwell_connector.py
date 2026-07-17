@@ -16,6 +16,7 @@
 #
 # Phantom App imports
 import json
+import os
 
 import encryption_helper
 import phantom.app as phantom
@@ -390,7 +391,10 @@ class CherwellConnector(BaseConnector):
             else:
                 temp_dir = "/opt/phantom/vault/tmp"
 
-            file_path = temp_dir + "/{}".format(attachment["attachmentFileName"])
+            file_name = str(attachment["attachmentFileName"]).replace("\\", "/").rsplit("/", 1)[-1]
+            if file_name in {"", ".", ".."}:
+                return action_result.set_status(phantom.APP_ERROR, "Attachment has an invalid file name")
+            file_path = os.path.join(temp_dir, file_name)
             with open(file_path, "wb+") as fp:
                 fp.write(response)
                 fp.close()
