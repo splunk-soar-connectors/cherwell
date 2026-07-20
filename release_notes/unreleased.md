@@ -1,4 +1,1 @@
 **Unreleased**
-
-* Enabled TLS server-certificate verification by default for Cherwell API requests.
-* Restricted downloaded attachment names to a single safe file-name component before vault staging.
